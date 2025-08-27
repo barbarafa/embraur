@@ -7,11 +7,13 @@ use App\Http\Controllers\{
     PedidoController, PagamentoController, MatriculaController,
     ProvaController, QuestaoController, CertificadoController,
     MensagemSuporteController
-    // se existir, adiciona aqui os “opcionais” também
 };
 
 use App\Http\Controllers\Auth\AlunoAuthController;
 use App\Http\Controllers\Auth\ProfessorAuthController;
+// opcionais (se existirem)
+use App\Http\Controllers\Auth\AlunoPasswordController;
+use App\Http\Controllers\Auth\AlunoRegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,9 +22,8 @@ use App\Http\Controllers\Auth\ProfessorAuthController;
 */
 Route::view('/', 'site.home')->name('site.home');
 
-// Catálogo (view) – use um path diferente de /cursos para não colidir com o CRUD
+// Catálogo (view) – usar /catalogo para não colidir com CRUD /cursos
 Route::view('/catalogo', 'site.cursos')->name('site.cursos');
-// (Se preferir manter /cursos para o catálogo, mova o CRUD para /api/cursos ou /adm/cursos)
 
 /*
 |--------------------------------------------------------------------------
@@ -31,9 +32,32 @@ Route::view('/catalogo', 'site.cursos')->name('site.cursos');
 */
 // Portal do Aluno
 Route::prefix('aluno')->group(function () {
+    // Login/Logout
     Route::get('login',  [AlunoAuthController::class, 'showLoginForm'])->name('portal.aluno');
     Route::post('login', [AlunoAuthController::class, 'login'])->name('aluno.login');
     Route::post('logout',[AlunoAuthController::class, 'logout'])->name('aluno.logout');
+
+    // (OPCIONAL) Cadastro do Aluno
+    if (class_exists(AlunoRegisterController::class)) {
+        Route::get('cadastro',  [AlunoRegisterController::class, 'show'])->name('aluno.register');
+        Route::post('cadastro', [AlunoRegisterController::class, 'store'])->name('aluno.register.store');
+    }
+
+    // (OPCIONAL) Esqueci minha senha (broker 'alunos')
+    if (class_exists(AlunoPasswordController::class)) {
+        Route::get('senha/esqueci',   [AlunoPasswordController::class, 'request'])->name('aluno.password.request');
+        Route::post('senha/email',    [AlunoPasswordController::class, 'email'])->name('aluno.password.email');
+        Route::get('senha/reset/{t}', [AlunoPasswordController::class, 'reset'])->name('aluno.password.reset');
+        Route::post('senha/reset',    [AlunoPasswordController::class, 'update'])->name('aluno.password.update');
+    }
+
+    // (OPCIONAL) Acesso Demo
+    Route::post('demo', [AlunoAuthController::class, 'demoLogin'])->name('aluno.demo');
+
+    // Dashboard protegido do Aluno
+    Route::middleware('auth:aluno')->group(function () {
+        Route::view('dashboard', 'aluno.dashboard')->name('aluno.dashboard');
+    });
 });
 
 // Portal do Professor
@@ -41,13 +65,17 @@ Route::prefix('professor')->group(function () {
     Route::get('login',  [ProfessorAuthController::class, 'showLoginForm'])->name('portal.professor');
     Route::post('login', [ProfessorAuthController::class, 'login'])->name('professor.login');
     Route::post('logout',[ProfessorAuthController::class, 'logout'])->name('professor.logout');
-});
 
+    // Dashboard protegido do Professor
+    Route::middleware('auth:professor')->group(function () {
+        Route::view('dashboard', 'professor.dashboard')->name('professor.dashboard');
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
-| CRUDs (padrão REST) — mantenha em /cursos, /modalidades, etc.
-| Se preferir, pode mover tudo para prefixo /api
+| CRUDs (padrão REST) — por ora, mantidos no web.php
+| Dica: futuramente mover para routes/api.php e proteger com auth/token.
 |--------------------------------------------------------------------------
 */
 Route::prefix('cursos')->group(function () {
@@ -97,7 +125,7 @@ Route::prefix('pagamentos')->group(function () {
     Route::put('/{pagamento}',      [PagamentoController::class, 'update']);
     Route::delete('/{pagamento}',   [PagamentoController::class, 'destroy']);
 });
-// Webhook Mercado Pago
+// Webhook Mercado Pago (público)
 Route::post('pagamentos/webhook/mercadopago', [PagamentoController::class, 'webhook']);
 
 Route::prefix('matriculas')->group(function () {
@@ -130,6 +158,7 @@ Route::prefix('certificados')->group(function () {
     Route::post('/',                  [CertificadoController::class, 'store']);
     Route::delete('/{certificado}',   [CertificadoController::class, 'destroy']);
 });
+// verificação pública por código
 Route::get('certificados/verificar/{codigo}', [CertificadoController::class, 'verify']);
 
 Route::prefix('mensagens-suporte')->group(function () {
@@ -139,20 +168,3 @@ Route::prefix('mensagens-suporte')->group(function () {
     Route::put('/{mensagemSuporte}',    [MensagemSuporteController::class, 'update']);
     Route::delete('/{mensagemSuporte}', [MensagemSuporteController::class, 'destroy']);
 });
-
-/*
-|--------------------------------------------------------------------------
-| (Opcional) Se quiser expor grupos só se o controller existir
-|--------------------------------------------------------------------------
-*/
-function optionalGroup(string $prefix, string $controller, array $routes)
-{
-    if (!class_exists($controller)) return;
-    Route::prefix($prefix)->group(function () use ($controller, $routes) {
-        foreach ($routes as $r) {
-            [$method, $uri, $action] = $r; // ex: ['get','/','index']
-            Route::{ $method }($uri, [$controller, $action]);
-        }
-    });
-}
-

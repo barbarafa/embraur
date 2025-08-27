@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
+@extends('layouts.app')
+{{--<head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAD Pro — Catálogo de Cursos</title>
 
-    {{-- Tailwind (ou troque por seu stack) --}}
+
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
@@ -14,11 +13,21 @@
         .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
     </style>
-</head>
+</head> --}}
+
+@section('page_header')
+    <h1 class="text-xl font-semibold">Cursos</h1>
+@endsection
+
+@section('page_actions')
+    {{--<a href="{{ route('logout') }}" class="rounded-md border px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800">
+        Sair
+    </a>--}}
+@endsection
 <body class="bg-gray-50 text-slate-800">
 
 {{-- NAVBAR --}}
-<header class="bg-white shadow-sm sticky top-0 z-40">
+{{--<header class="bg-white shadow-sm sticky top-0 z-40">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
         <a href="{{ route('site.home') }}" class="flex items-center gap-2">
             <span class="font-bold text-lg">📘 EAD Pro</span>
@@ -36,7 +45,7 @@
                class="px-3 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">Portal do Professor</a>
         </div>
     </div>
-</header>
+</header>--}
 
 {{-- HEADER --}}
 <section class="bg-white border-b">
@@ -67,7 +76,8 @@
                 <button class="px-3 py-2 text-sm rounded-md border tag-btn" data-tag="">Todos</button>
                 <button class="px-3 py-2 text-sm rounded-md border tag-btn" data-tag="segurança">Segurança</button>
                 <button class="px-3 py-2 text-sm rounded-md border tag-btn" data-tag="gestão">Gestão</button>
-                <button class="px-3 py-2 text-sm rounded-md border tag-btn" data-tag="meio-ambiente">Meio Ambiente</button>
+                <button class="px-3 py-2 text-sm rounded-md border tag-btn" data-tag="meio-ambiente">Meio Ambiente
+                </button>
             </div>
         </div>
     </div>
@@ -235,8 +245,8 @@
 
     tagButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-            tagButtons.forEach(b => b.classList.remove('bg-blue-600','text-white'));
-            btn.classList.add('bg-blue-600','text-white');
+            tagButtons.forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+            btn.classList.add('bg-blue-600', 'text-white');
             state.tag = btn.dataset.tag;
             state.page = 1;
             listarCursos(true);
