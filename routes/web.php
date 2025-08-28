@@ -25,6 +25,12 @@ Route::view('/', 'site.home')->name('site.home');
 // Catálogo (view) – usar /catalogo para não colidir com CRUD /cursos
 Route::view('/catalogo', 'site.cursos')->name('site.cursos');
 
+// ADD: (Opcional) Detalhe do curso público, se você for ter página de detalhes.
+//      Ajuste o controller/slug conforme seu domínio.
+Route::get('/catalogo/{slug}', [CursoController::class, 'publicShow'])
+    ->where('slug', '[A-Za-z0-9\-\_]+')
+    ->name('site.cursos.show'); // mantém o prefixo site.* para a navbar pública
+
 /*
 |--------------------------------------------------------------------------
 | Portais (logins)
@@ -167,4 +173,9 @@ Route::prefix('mensagens-suporte')->group(function () {
     Route::post('/',                    [MensagemSuporteController::class, 'store']);
     Route::put('/{mensagemSuporte}',    [MensagemSuporteController::class, 'update']);
     Route::delete('/{mensagemSuporte}', [MensagemSuporteController::class, 'destroy']);
+});
+
+// ADD: Fallback 404 amigável (mantém app bonito em rotas inexistentes)
+Route::fallback(function () {
+    return response()->view('errors.404', [], 404);
 });

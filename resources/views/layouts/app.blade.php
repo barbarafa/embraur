@@ -1,5 +1,4 @@
-
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full" x-data
       x-bind:data-theme="localStorage.getItem('theme') ?? 'light'">
 <head>
@@ -18,65 +17,54 @@
     {{-- Segurança --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    {{-- Favicon (ajuste os caminhos dos ícones) --}}
+    {{-- Favicon --}}
     <link rel="icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-    {{-- Vite (ajuste os caminhos conforme seu setup) --}}
+    {{-- Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Livewire (remova se não usar) --}}
+    {{-- Livewire --}}
     @if(class_exists(\Livewire\Livewire::class))
         @livewireStyles
     @endif
 
-    {{-- Pilhas de estilos específicos de página --}}
+    {{-- Estilos extras --}}
     @stack('styles')
 
-    {{-- Utilitário para esconder elementos até JS carregar (x-cloak do Alpine) --}}
     <style>[x-cloak]{display:none !important}</style>
 
-    {{-- Head extra injetável por página --}}
+    {{-- Head extra --}}
     @stack('head')
 </head>
 <body class="min-h-full antialiased bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
 
-{{-- Barra superior (opcional): use @section('navbar') para substituir --}}
+{{-- Navbar dinâmica --}}
 @hasSection('navbar')
     @yield('navbar')
 @else
-    <header class="border-b bg-white/70 backdrop-blur dark:bg-gray-900/70">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <a href="{{ url('/') }}" class="font-semibold tracking-tight">
-                {{ config('app.name', 'Laravel') }}
-            </a>
-
-            <nav class="flex items-center gap-3">
-                {{-- Exemplo de links --}}
-                <a href="{{ url('/') }}" class="hover:underline">Início</a>
-                @auth
-                    <a href="{{ url('/dashboard') }}" class="hover:underline">Dashboard</a>
-                @endauth
-
-                {{-- Toggle dark mode (sem dependências) --}}
-                <button type="button"
-                        aria-label="Alternar tema"
-                        class="rounded-md border px-3 py-1 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
-                        onclick="
-                                const c = document.documentElement;
-                                const next = (localStorage.getItem('theme') ?? 'light') === 'light' ? 'dark' : 'light';
-                                localStorage.setItem('theme', next);
-                                c.setAttribute('data-theme', next);
-                                if(next==='dark'){c.classList.add('dark')}else{c.classList.remove('dark')}
-                            ">
-                    Tema
-                </button>
-            </nav>
-        </div>
-    </header>
+    @if (request()->routeIs('site.*'))
+        {{-- Navbar pública do site --}}
+        @includeIf('site.navbar')
+    @else
+        {{-- Navbar padrão (dashboard/admin) --}}
+        <header class="border-b bg-white/70 backdrop-blur dark:bg-gray-900/70">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <a href="{{ url('/') }}" class="font-semibold tracking-tight">
+                    {{ config('app.name', 'Laravel') }}
+                </a>
+                <nav class="flex items-center gap-3">
+                    <a href="{{ url('/') }}" class="hover:underline">Início</a>
+                    @auth
+                        <a href="{{ url('/dashboard') }}" class="hover:underline">Dashboard</a>
+                    @endauth
+                </nav>
+            </div>
+        </header>
+    @endif
 @endif
 
-{{-- Área de alertas/flash messages --}}
+{{-- Flash messages --}}
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 space-y-2">
     @includeWhen(View::exists('partials.flash'), 'partials.flash')
 
@@ -93,7 +81,7 @@
     @endif
 </div>
 
-{{-- Breadcrumbs/ações de página (opcionais) --}}
+{{-- Page header/actions --}}
 @if(View::hasSection('page_header') || View::hasSection('page_actions'))
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -108,7 +96,7 @@
     @yield('content')
 </main>
 
-{{-- Rodapé (substituível) --}}
+{{-- Footer --}}
 @hasSection('footer')
     @yield('footer')
 @else
@@ -119,12 +107,12 @@
     </footer>
 @endif
 
-{{-- Livewire Scripts (remova se não usar)
+{{-- Livewire Scripts --}}
 @if(class_exists(\Livewire\Livewire::class))
     @livewireScripts
-@endif--}}
+@endif
 
-{{-- Pilhas de scripts específicos de página --}}
+{{-- Scripts extras --}}
 @stack('scripts')
 </body>
 </html>
