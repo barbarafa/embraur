@@ -35,7 +35,7 @@ Route::get('/catalogo/{slug}', [CursoController::class, 'publicShow'])
 |--------------------------------------------------------------------------
 | Portais (logins)
 |--------------------------------------------------------------------------
-*/
+*/php
 // Portal do Aluno
 Route::prefix('aluno')->group(function () {
     // Login/Logout
