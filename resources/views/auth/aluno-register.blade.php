@@ -1,24 +1,33 @@
 @extends('layouts.app')
 @section('title','Cadastro de Aluno')
+
 @section('content')
-    <div class="max-w-lg mx-auto mt-12 p-6 border rounded-xl">
-        <h1 class="text-2xl font-bold mb-4">Criar conta</h1>
-        @if ($errors->any())
-            <div class="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">
-                {{ $errors->first() }}
-            </div>
-        @endif
-        <form method="POST" action="{{ route('aluno.register.store') }}">
-            @csrf
-            <label class="block text-sm font-medium mb-1">Nome</label>
-            <input type="text" name="nome" value="{{ old('nome') }}" required class="w-full rounded-lg border-gray-300">
-            <label class="block text-sm font-medium mt-4 mb-1">E-mail</label>
-            <input type="email" name="email" value="{{ old('email') }}" required class="w-full rounded-lg border-gray-300">
-            <label class="block text-sm font-medium mt-4 mb-1">Senha</label>
-            <input type="password" name="password" required class="w-full rounded-lg border-gray-300">
-            <label class="block text-sm font-medium mt-4 mb-1">Confirmar senha</label>
-            <input type="password" name="password_confirmation" required class="w-full rounded-lg border-gray-300">
-            <button class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">Cadastrar</button>
-        </form>
-    </div>
+    <section class="mx-auto container-page px-4 py-12">
+        <div class="max-w-md mx-auto card p-6">
+            <h1 class="text-xl font-bold mb-3">Criar conta</h1>
+            <form method="post" action="{{ route('aluno.register.do') }}" class="space-y-3">
+                @csrf
+                <div>
+                    <label class="text-sm">Nome</label>
+                    <input name="nome" value="{{ old('nome') }}" class="w-full px-3 py-2 border rounded-md">
+                    @error('nome')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="text-sm">E-mail</label>
+                    <input name="email" type="email" value="{{ old('email') }}" class="w-full px-3 py-2 border rounded-md">
+                    @error('email')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="text-sm">Senha</label>
+                    <input name="password" type="password" class="w-full px-3 py-2 border rounded-md">
+                    @error('password')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="text-sm">Confirmar Senha</label>
+                    <input name="password_confirmation" type="password" class="w-full px-3 py-2 border rounded-md">
+                </div>
+                <button class="btn btn-primary w-full">Cadastrar</button>
+            </form>
+        </div>
+    </section>
 @endsection
