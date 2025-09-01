@@ -19,12 +19,14 @@ class AlunoAuthController extends Controller
             'remember'=>['nullable']
         ]);
 
+
+
         $aluno = Aluno::where('email',$data['email'])->first();
         if ($aluno && Hash::check($data['password'], $aluno->password)) {
             $request->session()->put('aluno_id', $aluno->id);
             $request->session()->put('aluno_nome', $aluno->nome);
             if ($request->boolean('remember')) $request->session()->put('aluno_remember', true);
-            return redirect()->intended(route('aluno.dashboard'));
+            return redirect()->route('aluno.dashboard');
         }
         return back()->withErrors(['email'=>'Credenciais inválidas.'])->onlyInput('email');
     }
