@@ -11,6 +11,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $alunoId = $request->session()->get('aluno_id');
+        dd($alunoId);
         $matriculas = Matricula::with('curso.categoria')
             ->where('aluno_id',$alunoId)
             ->latest()->get();

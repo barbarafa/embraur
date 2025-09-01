@@ -66,7 +66,7 @@
             @else
                 {{-- Botão do topo: leva ao login real --}}
                 <a href="{{ route('aluno.login') }}" class="btn btn-outline text-xs">Portal do Aluno</a>
-                <a href="{{ route('portal.professor') }}" class="btn btn-primary text-xs">Portal do Professor</a>
+                <a href="{{ route('prof.login') }}" class="btn btn-primary text-xs">Portal do Professor</a>
             @endif
         </div>
     </div>
