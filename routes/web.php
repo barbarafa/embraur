@@ -22,6 +22,7 @@ use App\Http\Controllers\Professor\ModuloAdminController;
 use App\Http\Controllers\Professor\AulaAdminController;
 use App\Http\Controllers\Professor\DuvidaController;
 use App\Http\Controllers\Professor\ProfessorAlunoController;
+use \App\Http\Controllers\Auth\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +32,8 @@ use App\Http\Controllers\Professor\ProfessorAlunoController;
 Route::get('/', [HomeController::class, 'index'])->name('site.home');
 Route::get('/catalogo', [CursoController::class, 'index'])->name('site.cursos');
 Route::get('/curso/{slug}', [CursoController::class, 'show'])->name('site.curso.detalhe');
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -73,9 +76,9 @@ Route::get('/portal/professor', fn () => redirect()->route('prof.dashboard'))->n
 */
 Route::prefix('prof')->name('prof.')->group(function () {
     // Auth
-    Route::get('login', [ProfessorAuthController::class, 'showLogin'])->name('login');
-    Route::post('login', [ProfessorAuthController::class, 'login'])->name('login.do');
-    Route::post('logout', [ProfessorAuthController::class, 'logout'])->name('logout');
+    Route::get('login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('login', [AuthController::class, 'loginProfessor'])->name('login.do');
+    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
     // Protegido
     Route::middleware('prof.auth')->group(function () {

@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Curso;
+use App\Models\Cursos;
 
 class HomeController extends Controller
 {
     public function index()
     {
-        $populares = Curso::where('popular', true)->take(4)->get();
+        $populares = Cursos::where('status', 'publicado')->get();
         return view('site.home', compact('populares'));
     }
 }

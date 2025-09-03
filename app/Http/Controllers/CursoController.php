@@ -2,36 +2,99 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Curso;
-use App\Models\Categoria;
+
+
+use App\Models\Categorias;
+use App\Models\Cursos;
 use Illuminate\Http\Request;
 
 class CursoController extends Controller
 {
     public function index(Request $request)
     {
-        $q = Curso::with('categoria');
+        $query = Cursos::with(['categoria', 'instrutor'])
+            ->where('status', 'publicado');
 
-        if ($request->filled('categoria')) {
-            $q->whereHas('categoria', fn($qq) => $qq->where('slug', $request->categoria));
-        }
-
-        if ($request->filled('busca')) {
-            $q->where(function($w) use ($request) {
-                $w->where('titulo','like','%'.$request->busca.'%')
-                    ->orWhere('descricao','like','%'.$request->busca.'%');
+        if ($request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('titulo', 'like', "%{$request->search}%")
+                    ->orWhere('descricao', 'like', "%{$request->search}%");
             });
         }
 
-        $cursos = $q->orderBy('titulo')->paginate(6)->withQueryString();
-        $categorias = Categoria::orderBy('nome')->get();
+        if ($request->categoria) {
+            $query->whereHas('categoria', function($q) use ($request) {
+                $q->where('nome', $request->categoria);
+            });
+        }
 
-        return view('site.catalogo', compact('cursos','categorias'));
+        $cursos = $query->paginate(12);
+
+        return view('site.catalogo', compact('cursos'));
+       // return response()->json($cursos);
     }
 
-    public function show(string $slug)
+    public function show($id)
     {
-        $curso = Curso::where('slug',$slug)->with('categoria')->firstOrFail();
-        return view('site.curso-detalhe', compact('curso'));
+        $curso = Cursos::with([
+            'categoria',
+            'instrutor',
+            'modulos.aulas',
+            'avaliacoes.usuario'
+        ])->findOrFail($id);
+
+        return response()->json($curso);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'descricao' => 'required|string',
+            'categoria_id' => 'required|exists:categorias,id',
+            'nivel' => 'required|in:Iniciante,Intermediário,Avançado',
+            'preco' => 'nullable|numeric|min:0',
+            'duracao_horas' => 'nullable|integer|min:1',
+            'max_alunos' => 'nullable|integer|min:1',
+            'imagem_capa' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'tags' => 'nullable|array'
+        ]);
+
+        if ($request->hasFile('imagem_capa')) {
+            $validated['imagem_capa'] = $request->file('imagem_capa')
+                ->store('cursos/capas', 'public');
+        }
+
+        $validated['instrutor_id'] = auth()->id();
+        $validated['status'] = $request->is_draft ? 'rascunho' : 'publicado';
+
+        $curso = Cursos::create($validated);
+
+        // Criar módulos e aulas se fornecidos
+        if ($request->modulos) {
+            foreach ($request->modulos as $index => $moduloData) {
+                $modulo = $curso->modulos()->create([
+                    'titulo' => $moduloData['titulo'],
+                    'descricao' => $moduloData['descricao'],
+                    'ordem' => $index + 1
+                ]);
+
+                if (isset($moduloData['lessons'])) {
+                    foreach ($moduloData['lessons'] as $lessonIndex => $aulaData) {
+                        $modulo->aulas()->create([
+                            'titulo' => $aulaData['titulo'],
+                            'duracao_minutos' => $aulaData['duracao'],
+                            'tipo_conteudo' => $aulaData['tipo'],
+                            'ordem' => $lessonIndex + 1
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'curso' => $curso->load('modulos.aulas')
+        ]);
     }
 }
