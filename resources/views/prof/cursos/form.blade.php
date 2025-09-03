@@ -37,18 +37,18 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
-                                <label class="text-sm font-medium">Título</label>
+                                <label class="text-sm font-medium">Título *</label>
                                 <input type="text" name="titulo" value="{{ old('titulo',$curso->titulo) }}"
                                        class="mt-1 w-full h-10 rounded-md border-slate-300"
                                        placeholder="Ex.: Segurança do Trabalho - NR10" required>
                                 @error('titulo') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
                             </div>
 
-                            <div class="md:col-span-2">
-                                <label class="text-sm font-medium">Resumo</label>
-                                <textarea name="resumo" rows="3" class="mt-1 w-full rounded-md border-slate-300"
-                                          placeholder="Breve resumo do curso...">{{ old('resumo',$curso->resumo) }}</textarea>
-                                @error('resumo') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
+                            <div>
+                                <label class="text-sm font-medium">Preço (R$)</label>
+                                <input type="number" name="preco" value="{{ old('preco',$curso->preco) }}"
+                                       class="mt-1 w-full h-10 rounded-md border-slate-300" min="0" step="0.01" placeholder="0,00">
+                                @error('preco') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
                             </div>
 
                             <div>
@@ -59,24 +59,17 @@
                             </div>
 
                             <div>
-                                <label class="text-sm font-medium">Carga Horária (h)</label>
+                                <label class="text-sm font-medium">Carga horária (h)</label>
                                 <input type="number" name="carga_horaria" value="{{ old('carga_horaria',$curso->carga_horaria) }}"
                                        class="mt-1 w-full h-10 rounded-md border-slate-300" min="0" step="1">
                                 @error('carga_horaria') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
                             </div>
 
-                            <div>
-                                <label class="text-sm font-medium">Preço (R$)</label>
-                                <input type="number" name="preco" value="{{ old('preco',$curso->preco) }}"
-                                       class="mt-1 w-full h-10 rounded-md border-slate-300" min="0" step="0.01" placeholder="0,00">
-                                @error('preco') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
-                            </div>
-
-                            <div class="flex items-center gap-3 mt-6">
-                                <input id="publicado" type="checkbox" name="publicado" value="1"
-                                       class="h-4 w-4 rounded border-slate-300"
-                                    {{ old('publicado',$curso->publicado) ? 'checked' : '' }}>
-                                <label for="publicado" class="text-sm">Publicado (visível no catálogo)</label>
+                            <div class="md:col-span-2">
+                                <label class="text-sm font-medium">Resumo</label>
+                                <textarea name="resumo" rows="3" class="mt-1 w-full rounded-md border-slate-300"
+                                          placeholder="Breve resumo do curso...">{{ old('resumo',$curso->resumo) }}</textarea>
+                                @error('resumo') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
                             </div>
 
                             <div class="md:col-span-2">
@@ -85,10 +78,17 @@
                                           placeholder="Descrição completa do curso, objetivos, público-alvo...">{{ old('descricao',$curso->descricao) }}</textarea>
                                 @error('descricao') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
                             </div>
+
+                            <div class="flex items-center gap-3 md:col-span-2 mt-2">
+                                <input id="publicado" type="checkbox" name="publicado" value="1"
+                                       class="h-4 w-4 rounded border-slate-300"
+                                    {{ old('publicado',$curso->publicado) ? 'checked' : '' }}>
+                                <label for="publicado" class="text-sm">Publicar curso</label>
+                            </div>
                         </div>
                     </div>
 
-                    {{-- Módulos & Aulas - call to action (apenas após salvar) --}}
+                    {{-- Módulos & Aulas - CTA (apenas após salvar) --}}
                     @if($curso->exists)
                         <div class="rounded-xl border bg-white p-4 shadow-sm">
                             <div class="flex items-center justify-between">
@@ -96,7 +96,7 @@
                                 <a href="{{ route('prof.cursos.modulos.index',$curso) }}" class="btn btn-outline">Gerenciar</a>
                             </div>
                             <p class="text-sm text-slate-600 mt-2">
-                                Organize o conteúdo do curso em módulos e aulas. Você pode definir ordem, anexar vídeos/PDFs e liberar por gotejamento.
+                                Organize o conteúdo do curso em módulos e aulas. Defina ordem, anexos (vídeo/PDF) e liberação.
                             </p>
                         </div>
                     @endif

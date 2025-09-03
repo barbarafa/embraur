@@ -1,41 +1,51 @@
 @extends('layouts.app')
-@section('title','Área do Aluno - Meus Cursos')
+@section('title', 'Área do Aluno - Visão Geral')
 
 @section('content')
-    <section class="mx-auto container-page px-4 py-10">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold">Meus Cursos</h1>
-            <form action="{{ route('aluno.logout') }}" method="post">
-                @csrf
-                <button class="btn btn-outline">Sair</button>
-            </form>
-        </div>
+    <div class="container-page py-6">
+        @include('aluno._tabs', ['aluno' => $aluno, 'stats' => $stats])
 
-        @if(session('ok'))
-            <div class="mb-4 p-3 bg-green-50 text-green-700 rounded">{{ session('ok') }}</div>
-        @endif
-
-        @if($matriculas->isEmpty())
-            <div class="card p-6 text-slate-600">Você ainda não tem cursos. Acesse o catálogo e matricule-se em um curso.</div>
-        @else
-            <div class="grid md:grid-cols-3 gap-4">
-                @foreach($matriculas as $m)
-                    <div class="card overflow-hidden">
-                        <div class="h-32 bg-slate-100 flex items-center justify-center">
-                            <i class="ri-image-2-line text-3xl text-slate-400"></i>
-                        </div>
-                        <div class="p-4 space-y-2">
-                            <div class="text-[11px]">
-                                <span class="badge border-blue-200 text-blue-700 bg-blue-50">{{ $m->curso->categoria->nome }}</span>
-                                <span class="badge border-slate-200 text-slate-600 bg-slate-50 ml-1">{{ $m->curso->nivel }}</span>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+            {{-- Continue Aprendendo --}}
+            <div class="lg:col-span-2 rounded-xl border bg-white p-4 shadow-sm">
+                <h3 class="text-lg font-semibold mb-3">Continue Aprendendo</h3>
+                <div class="space-y-3">
+                    @forelse(($continuar ?? []) as $item)
+                        <div class="rounded-lg border p-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-gray-200 rounded-md"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">{{ $item['titulo'] }}</div>
+                                    <div class="w-full bg-gray-100 h-2 rounded mt-2">
+                                        <div class="bg-blue-600 h-2 rounded" style="width: {{ $item['percent'] }}%"></div>
+                                    </div>
+                                    <div class="text-xs text-slate-500 mt-1">
+                                        {{ $item['aulas_feitas'] }}/{{ $item['aulas_total'] }} aulas • {{ $item['percent'] }}%
+                                    </div>
+                                </div>
+                                <a href="{{ $item['link'] }}" class="btn-primary text-xs px-3 py-1 rounded-md">Continuar</a>
                             </div>
-                            <h3 class="font-semibold leading-snug">{{ $m->curso->titulo }}</h3>
-                            <div class="text-xs text-slate-500"><i class="ri-time-line mr-1"></i>{{ $m->curso->carga_horaria }}h</div>
-                            <a href="{{ route('site.curso.detalhe',$m->curso->slug) }}" class="btn btn-primary w-full">Ir para o curso</a>
                         </div>
-                    </div>
-                @endforeach
+                    @empty
+                        <p class="text-sm text-slate-500">Você ainda não iniciou nenhum curso.</p>
+                    @endforelse
+                </div>
             </div>
-        @endif
-    </section>
+
+            {{-- Atividades Recentes --}}
+            <div class="rounded-xl border bg-white p-4 shadow-sm">
+                <h3 class="text-lg font-semibold mb-3">Atividades Recentes</h3>
+                <ul class="space-y-2">
+                    @forelse(($recentes ?? []) as $r)
+                        <li class="text-sm">
+                            <span class="font-medium">{{ $r['titulo'] }}</span>
+                            <div class="text-xs text-slate-500">{{ $r['curso'] ?? '' }} {{ isset($r['quando']) ? '• '.$r['quando'] : '' }}</div>
+                        </li>
+                    @empty
+                        <p class="text-sm text-slate-500">Nenhuma atividade recente encontrada.</p>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+    </div>
 @endsection

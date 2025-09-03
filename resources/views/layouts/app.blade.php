@@ -1,125 +1,86 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>@yield('title','EAD Pro')</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@yield('title', 'EAD Pro')</title>
 
-    {{-- Tailwind via CDN + Remix Icons --}}
+    {{-- mantém o seu vite (se já estiver ok, segue usando) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- fallback SEM instalar nada: deixa tudo bonito mesmo se o vite não carregar --}}
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-
-    {{-- Utilitários próprios (sem @apply, pois estamos no CDN) --}}
     <style>
-        .container-page{max-width:1152px}
-        .btn{
-            display:inline-flex; align-items:center; justify-content:center;
-            border-radius:0.375rem; padding:0.5rem 1rem;
-            font-size:0.875rem; font-weight:500; transition:all .2s;
-        }
-        .btn-primary{ background:#2563eb; color:#fff; }
-        .btn-primary:hover{ background:#1d4ed8; }
-        .btn-outline{ border:1px solid rgb(203 213 225); color:rgb(71 85 105); }
-        .btn-outline:hover{ background:rgb(248 250 252); }
-        .badge{
-            font-size:11px; padding:2px 8px; border-radius:9999px; border:1px solid rgb(226 232 240);
-        }
-        .card{
-            border-radius:0.75rem; border:1px solid rgb(226 232 240); background:#fff;
-            box-shadow:0 1px 2px rgba(16,24,40,.04);
-        }
+        .container-page{max-width:1100px;margin:0 auto;padding-left:1rem;padding-right:1rem}
+        .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:.5rem;padding:.5rem .9rem;font-weight:600;border:1px solid transparent;line-height:1}
+        .btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}
+        .btn-outline{background:#fff;color:#0f172a;border-color:#cbd5e1}.btn-outline:hover{background:#f8fafc}
+        .btn-soft{background:#f1f5f9;color:#0f172a}.btn-soft:hover{background:#e2e8f0}
     </style>
 </head>
-
-@php use Illuminate\Support\Str; @endphp
-<body class="bg-gray-50 min-h-screen flex flex-col">
-
-{{-- HEADER --}}
+<body class="bg-slate-50 text-slate-800">
+{{-- Header ÚNICO --}}
 <header class="bg-white border-b">
-    <div class="mx-auto container-page px-4 py-3 flex items-center justify-between">
-        {{-- LOGO --}}
-        <a href="{{ route('site.home') }}" class="flex items-center gap-2">
-            <i class="ri-graduation-cap-line text-xl text-blue-600"></i>
-            <span class="font-semibold">EAD Pro</span>
+    <div class="container-page flex items-center justify-between h-14">
+        <a href="{{ route('site.home') }}" class="flex items-center gap-2 font-semibold">
+            <span class="inline-block w-5 h-5 rounded border border-slate-300"></span> EAD Pro
         </a>
 
-        {{-- MENU PRINCIPAL --}}
         <nav class="hidden md:flex items-center gap-6 text-sm">
-            <a class="{{ request()->routeIs('site.home') ? 'text-blue-600 font-semibold' : 'text-slate-700 hover:text-blue-600' }}"
-               href="{{ route('site.home') }}">Início</a>
-            <a class="{{ request()->routeIs('site.cursos') ? 'text-blue-600 font-semibold' : 'text-slate-700 hover:text-blue-600' }}"
-               href="{{ route('site.cursos') }}">Cursos</a>
-            <a class="text-slate-700 hover:text-blue-600" href="#">Sobre</a>
-            <a class="text-slate-700 hover:text-blue-600" href="#">Contato</a>
+            <a href="{{ route('site.home') }}" class="hover:text-blue-600">Início</a>
+            <a href="{{ route('site.cursos') }}" class="hover:text-blue-600">Cursos</a>
+            <a href="#" class="hover:text-blue-600">Sobre</a>
+            <a href="#" class="hover:text-blue-600">Contato</a>
         </nav>
 
-        {{-- AÇÕES (DIREITA) --}}
         <div class="flex items-center gap-2">
-            @if(session()->has('aluno_id'))
-                <a href="{{ route('aluno.dashboard') }}" class="btn btn-outline text-xs">
-                    Olá, {{ Str::limit(session('aluno_nome'), 16) }}
-                </a>
-                <form method="post" action="{{ route('aluno.logout') }}">
-                    @csrf
-                    <button class="btn btn-primary text-xs">Sair</button>
+            <a href="{{ route('portal.aluno') }}" class="hidden sm:inline-flex btn btn-soft">Portal do Aluno</a>
+            <a href="{{ route('portal.professor') }}" class="hidden sm:inline-flex btn btn-outline">Portal do Professor</a>
+
+            @if(session('aluno_id'))
+                <form action="{{ route('aluno.logout') }}" method="post">@csrf
+                    <button class="btn-primary h-9 px-4 rounded-md">Sair</button>
                 </form>
-            @else
-                {{-- Botão do topo: leva ao login real --}}
-                <a href="{{ route('aluno.login') }}" class="btn btn-outline text-xs">Portal do Aluno</a>
-                <a href="{{ route('prof.login') }}" class="btn btn-primary text-xs">Portal do Professor</a>
             @endif
         </div>
     </div>
 </header>
 
-{{-- CONTEÚDO --}}
-<main class="flex-1">
-    @yield('content')
-</main>
+<main>@yield('content')</main>
 
-{{-- FOOTER --}}
-<footer class="mt-10 bg-white border-t">
-    <div class="mx-auto container-page px-4 py-10 grid md:grid-cols-4 gap-8 text-sm">
+{{-- Footer ÚNICO --}}
+<footer class="mt-10 border-t bg-white">
+    <div class="container-page py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
         <div>
-            <p class="font-semibold mb-2">EAD Pro</p>
+            <div class="font-semibold mb-2">EAD Pro</div>
             <p class="text-slate-600">Plataforma completa de ensino a distância com cursos de qualidade e certificação reconhecida.</p>
-            <div class="flex items-center gap-3 mt-3 text-slate-500">
-                <i class="ri-facebook-line"></i><i class="ri-instagram-line"></i><i class="ri-youtube-line"></i>
-            </div>
         </div>
         <div>
-            <p class="font-semibold mb-2">Links Rápidos</p>
+            <div class="font-semibold mb-2">Links Rápidos</div>
             <ul class="space-y-1 text-slate-600">
-                <li><a href="{{ route('site.cursos') }}" class="hover:text-blue-600">Catálogo de Cursos</a></li>
-                <li><a href="#" class="hover:text-blue-600">Sobre Nós</a></li>
-                <li><a href="#" class="hover:text-blue-600">Contato</a></li>
-                <li><a href="#" class="hover:text-blue-600">Central de Ajuda</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('site.cursos') }}">Catálogo de Cursos</a></li>
+                <li><a class="hover:text-blue-600" href="#">Sobre Nós</a></li>
+                <li><a class="hover:text-blue-600" href="#">Contato</a></li>
+                <li><a class="hover:text-blue-600" href="#">Central de Ajuda</a></li>
             </ul>
         </div>
         <div>
-            <p class="font-semibold mb-2">Área do Aluno</p>
+            <div class="font-semibold mb-2">Área do Aluno</div>
             <ul class="space-y-1 text-slate-600">
-                <li><a href="{{ route('aluno.login') }}" class="hover:text-blue-600">Login</a></li>
-                <li><a href="{{ route('aluno.register') }}" class="hover:text-blue-600">Cadastro</a></li>
-                <li><a href="{{ route('aluno.dashboard') }}" class="hover:text-blue-600">Meus Cursos</a></li>
-                <li><a href="#" class="hover:text-blue-600">Certificados</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.login') }}">Login</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.register') }}">Cadastro</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.cursos') }}">Meus Cursos</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.certificados') }}">Certificados</a></li>
             </ul>
         </div>
         <div>
-            <p class="font-semibold mb-2">Contato</p>
+            <div class="font-semibold mb-2">Contato</div>
             <ul class="space-y-1 text-slate-600">
-                <li><i class="ri-mail-line mr-1"></i> contato@eadpro.com.br</li>
-                <li><i class="ri-phone-line mr-1"></i> (11) 99999-9999</li>
-                <li><i class="ri-map-pin-line mr-1"></i> São Paulo, SP</li>
+                <li>contato@eadpro.com.br</li><li>(11) 99999-9999</li><li>São Paulo, SP</li>
             </ul>
         </div>
     </div>
-    <div class="border-t">
-        <div class="mx-auto container-page px-4 py-4 text-xs text-slate-500">
-            © 2024 EAD Pro. Todos os direitos reservados.
-        </div>
-    </div>
+    <div class="text-center text-xs text-slate-500 py-4 border-t">© 2024 EAD Pro. Todos os direitos reservados.</div>
 </footer>
-
 </body>
 </html>

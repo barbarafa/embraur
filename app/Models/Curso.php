@@ -9,13 +9,32 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Curso extends Model
 {
     protected $fillable = [
-        'categoria_id','titulo','descricao','carga_horaria',
-        'preco','preco_promocional','nivel','avaliacao','alunos','slug','popular'
+        'titulo','slug','resumo','descricao','preco','nivel','carga_horaria',
+        'max_alunos','publicado','capa_path','categoria_id','professor_id',
+        'tags','estrutura',
     ];
+
+    protected $casts = [
+        'publicado' => 'boolean',
+        'preco'     => 'decimal:2',
+        'tags'      => 'array',
+        'estrutura' => 'array',
+    ];
+
+    // RELAÇÕES
+    public function professor(): BelongsTo
+    {
+        return $this->belongsTo(Professor::class);
+    }
 
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(Categoria::class);
+    }
+
+    public function modulos(): HasMany
+    {
+        return $this->hasMany(Modulo::class)->orderBy('ordem');
     }
 
     public function matriculas(): HasMany
@@ -23,8 +42,14 @@ class Curso extends Model
         return $this->hasMany(Matricula::class);
     }
 
+    public function duvidas(): HasMany
+    {
+        return $this->hasMany(Duvida::class);
+    }
+
+    // Exemplo de acessor
     public function getPrecoFinalAttribute()
     {
-        return $this->preco_promocional ?? $this->preco;
+        return $this->preco; // ajuste se tiver preço promocional
     }
 }
