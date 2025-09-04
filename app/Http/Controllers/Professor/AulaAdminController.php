@@ -10,127 +10,138 @@ use Illuminate\Http\Request;
 
 class AulaAdminController extends Controller
 {
-    public function index(Curso $curso, Modulo $modulo, Request $request)
+    public function index(Curso $curso, Modulo $modulo)
     {
-        $this->authz($curso, $request);
-        abort_unless($modulo->curso_id === $curso->id, 404);
+        $this->authorizeCurso($curso);
+        $this->authorizeModulo($curso, $modulo);
+        $aulas = $modulo->aulas()->with('materiais')->get();
 
-        $aulas = Aula::where('modulo_id', $modulo->id)->orderBy('ordem')->get();
-        return view('prof.aulas.index', compact('curso', 'modulo', 'aulas'));
+        return view('prof.aulas.index', compact('curso','modulo','aulas'));
     }
 
-    public function store(Curso $curso, Modulo $modulo, Request $request)
+    public function store(Request $request, Curso $curso, Modulo $modulo)
     {
-        $this->authz($curso, $request);
-        abort_unless($modulo->curso_id === $curso->id, 404);
+        $this->authorizeCurso($curso);
+        $this->authorizeModulo($curso, $modulo);
 
         $data = $request->validate([
-            'titulo'   => 'required|string|max:160',
-            'tipo'     => 'required|in:video,pdf,texto',
-            'url_video'=> 'nullable|url',
-            'arquivo'  => 'nullable|file|max:20480', // 20MB
-            'duracao'  => 'nullable|integer|min:0',
-            'preview'  => 'nullable|boolean',
+            'titulo'               => 'required|string|max:255',
+            'descricao'            => 'nullable|string',
+            'tipo'                 => 'required|in:video,texto,quiz,arquivo',
+            'duracao_minutos'      => 'nullable|integer|min:0',
+            'conteudo_url'         => 'nullable|string|max:255',
+            'conteudo_texto'       => 'nullable|string',
+            'ordem'                => 'nullable|integer|min:0',
+            'liberada_apos_anterior'=> 'nullable|boolean'
         ]);
 
-        $ordem = (int) Aula::where('modulo_id', $modulo->id)->max('ordem') + 1;
+        $data['modulo_id'] = $modulo->id;
+        $data['liberada_apos_anterior'] = (bool)($data['liberada_apos_anterior'] ?? false);
 
-        $aula = new Aula();
-        $aula->fill([
-            'modulo_id' => $modulo->id,
-            'titulo'    => $data['titulo'],
-            'tipo'      => $data['tipo'],
-            'url_video' => $data['url_video'] ?? null,
-            'duracao'   => $data['duracao'] ?? null,
-            'preview'   => (bool)($data['preview'] ?? false),
-            'ordem'     => $ordem,
-        ]);
-
-        if ($request->hasFile('arquivo')) {
-            $aula->arquivo_path = $request->file('arquivo')->store('aulas', 'public');
-        }
-
-        $aula->save();
-        return back()->with('success', 'Aula criada.');
+        Aula::create($data);
+        return back()->with('success','Aula criada!');
     }
 
-    public function update(Curso $curso, Modulo $modulo, Aula $aula, Request $request)
+    public function update(Request $request, Curso $curso, Modulo $modulo, Aula $aula)
     {
-        $this->authz($curso, $request);
-        abort_unless($modulo->curso_id === $curso->id && $aula->modulo_id === $modulo->id, 404);
+        $this->authorizeCurso($curso);
+        $this->authorizeModulo($curso, $modulo);
+        $this->authorizeAula($modulo, $aula);
 
         $data = $request->validate([
-            'titulo'   => 'required|string|max:160',
-            'tipo'     => 'required|in:video,pdf,texto',
-            'url_video'=> 'nullable|url',
-            'arquivo'  => 'nullable|file|max:20480',
-            'duracao'  => 'nullable|integer|min:0',
-            'preview'  => 'nullable|boolean',
-            'ordem'    => 'nullable|integer|min:1',
+            'titulo'               => 'required|string|max:255',
+            'descricao'            => 'nullable|string',
+            'tipo'                 => 'required|in:video,texto,quiz,arquivo',
+            'duracao_minutos'      => 'nullable|integer|min:0',
+            'conteudo_url'         => 'nullable|string|max:255',
+            'conteudo_texto'       => 'nullable|string',
+            'ordem'                => 'nullable|integer|min:0',
+            'liberada_apos_anterior'=> 'nullable|boolean'
         ]);
 
-        $aula->fill([
-            'titulo'    => $data['titulo'],
-            'tipo'      => $data['tipo'],
-            'url_video' => $data['url_video'] ?? null,
-            'duracao'   => $data['duracao'] ?? null,
-            'preview'   => (bool)($data['preview'] ?? false),
-        ]);
+        $data['liberada_apos_anterior'] = (bool)($data['liberada_apos_anterior'] ?? false);
 
-        if ($request->hasFile('arquivo')) {
-            $aula->arquivo_path = $request->file('arquivo')->store('aulas', 'public');
-        }
-        if (isset($data['ordem'])) {
-            $aula->ordem = (int)$data['ordem'];
-        }
-
-        $aula->save();
-        return back()->with('success', 'Aula atualizada.');
+        $aula->update($data);
+        return back()->with('success','Aula atualizada!');
     }
 
-    public function destroy(Curso $curso, Modulo $modulo, Aula $aula, Request $request)
+    public function destroy(Curso $curso, Modulo $modulo, Aula $aula)
     {
-        $this->authz($curso, $request);
-        abort_unless($modulo->curso_id === $curso->id && $aula->modulo_id === $modulo->id, 404);
+        $this->authorizeCurso($curso);
+        $this->authorizeModulo($curso, $modulo);
+        $this->authorizeAula($modulo, $aula);
 
         $aula->delete();
-        return back()->with('success', 'Aula removida.');
+        return back()->with('success','Aula removida.');
     }
 
-    public function reorder(Curso $curso, Modulo $modulo, Request $request)
+    public function reorder(Request $request, Curso $curso, Modulo $modulo)
     {
-        $this->authz($curso, $request);
-        abort_unless($modulo->curso_id === $curso->id, 404);
+        $this->authorizeCurso($curso);
+        $this->authorizeModulo($curso, $modulo);
 
-        $data = $request->validate(['ordem' => 'required|array']); // [aula_id=>ordem]
-        foreach ($data['ordem'] as $aulaId => $ordem) {
-            Aula::where('id', $aulaId)->where('modulo_id', $modulo->id)->update(['ordem' => (int)$ordem]);
+        $data = $request->validate([
+            'ordens' => 'required|array'
+        ]);
+
+        foreach ($data['ordens'] as $it) {
+            Aula::where('id',$it['id'])->where('modulo_id',$modulo->id)->update(['ordem'=>$it['ordem']]);
         }
-        return back()->with('success', 'Ordem das aulas atualizada.');
+        return back()->with('success','Ordenação salva!');
     }
 
-    public function uploadMedia(Curso $curso, Modulo $modulo, Aula $aula, Request $request)
+    // Upload/Remoção de materiais da aula (links nas rotas)
+    public function uploadMedia(Request $request, Curso $curso, Modulo $modulo, Aula $aula)
     {
-        // opcional se quiser endpoint separado
-        return $this->update($curso, $modulo, $aula, $request);
+        $this->authorizeCurso($curso);
+        $this->authorizeModulo($curso, $modulo);
+        $this->authorizeAula($modulo, $aula);
+
+        $request->validate([
+            'arquivo' => 'required|file|max:10240' // 10MB
+        ]);
+
+        $path = $request->file('arquivo')->store('aulas/materiais', 'public');
+
+        MaterialApoio::create([
+            'aula_id'      => $aula->id,
+            'nome_arquivo' => $request->file('arquivo')->getClientOriginalName(),
+            'tipo_arquivo' => $request->file('arquivo')->getMimeType(),
+            'url_download' => $path,
+            'tamanho_kb'   => round($request->file('arquivo')->getSize()/1024)
+        ]);
+
+        return back()->with('success','Material enviado!');
     }
 
-    public function removeMedia(Curso $curso, Modulo $modulo, Aula $aula, $media, Request $request)
+    public function removeMedia(Curso $curso, Modulo $modulo, Aula $aula, MaterialApoio $media)
     {
-        $this->authz($curso, $request);
-        if ($media === 'arquivo') {
-            $aula->arquivo_path = null;
-        } elseif ($media === 'url_video') {
-            $aula->url_video = null;
+        $this->authorizeCurso($curso);
+        $this->authorizeModulo($curso, $modulo);
+        $this->authorizeAula($modulo, $aula);
+
+        if ($media->aula_id != $aula->id) abort(404);
+
+        // remove arquivo
+        if ($media->url_download && Storage::disk('public')->exists($media->url_download)) {
+            Storage::disk('public')->delete($media->url_download);
         }
-        $aula->save();
-        return back()->with('success', 'Mídia removida.');
+        $media->delete();
+
+        return back()->with('success','Material removido!');
     }
 
-    private function authz(Curso $curso, Request $request)
+    private function authorizeCurso(Curso $curso)
     {
-        $profId = $request->session()->get('prof_id');
-        abort_unless((int)$curso->professor_id === (int)$profId, 403);
+        if ($curso->professor_id != session('prof_id')) abort(403);
+    }
+    private function authorizeModulo(Curso $curso, Modulo $modulo)
+    {
+        if ($modulo->curso_id != $curso->id) abort(404);
+    }
+    private function authorizeAula(Modulo $modulo, Aula $aula)
+    {
+        if ($aula->modulo_id != $modulo->id) abort(404);
     }
 }
 

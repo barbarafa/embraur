@@ -7,43 +7,29 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cursos extends Model
 {
-    use HasFactory;
+    protected $table = 'cursos';
+    public $timestamps = false; // migrations usam campos custom, sem updated_at/created_at
 
     protected $fillable = [
-        'titulo', 'descricao', 'descricao_curta', 'categoria_id', 'instrutor_id',
-        'nivel', 'preco', 'preco_original', 'duracao_horas', 'max_alunos',
-        'imagem_capa', 'video_promocional', 'tags', 'status', 'data_lancamento',
-        'data_atualizacao', 'avaliacao_media', 'total_avaliacoes'
+        'professor_id','categoria_id','titulo','descricao_curta','descricao_completa',
+        'imagem_capa','video_introducao','nivel','carga_horaria_total','preco','preco_original',
+        'nota_minima_aprovacao','maximo_alunos','status_publicacao','slug'
     ];
 
-    protected $casts = [
-        'tags' => 'array',
-        'data_lancamento' => 'datetime',
-        'data_atualizacao' => 'datetime'
-    ];
+  //['iniciante', 'intermediario', 'avancado']
 
-    public function categoria()
-    {
-        return $this->belongsTo(Categorias::class);
-    }
 
-    public function instrutor()
-    {
-        return $this->belongsTo(User::class, 'instrutor_id');
-    }
+    // RELS
+    public function instrutor(){ return $this->belongsTo(User::class, 'professor_id'); }
+    public function categoria(){ return $this->belongsTo(Categorias::class, 'categoria_id'); }
+    public function modulos()  { return $this->hasMany(Modulo::class, 'curso_id')->orderBy('ordem'); }
+//    public function tags()     { return $this->hasMany(TagCurso::class, 'curso_id'); }
+    public function matriculas(){ return $this->hasMany(Matricula::class, 'curso_id'); }
 
-    public function modulos()
+    public function getImagemCapaUrlAttribute()
     {
-        return $this->hasMany(Modulo::class)->orderBy('ordem');
-    }
-
-    public function matriculas()
-    {
-        return $this->hasMany(Matricula::class);
-    }
-
-    public function avaliacoes()
-    {
-        return $this->hasMany(Avaliaca::class);
+        return $this->imagem_capa
+            ? asset('storage/'.$this->imagem_capa)
+            : null; // ou um placeholder: asset('images/placeholder-16x9.jpg')
     }
 }

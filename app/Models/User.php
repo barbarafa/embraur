@@ -2,41 +2,90 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+
+
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class User extends Model implements Authenticatable
 {
     use HasFactory;
 
+    protected $table = 'users';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
+    const CREATED_AT = 'data_criacao';
+    const UPDATED_AT = 'data_atualizacao';
+
     protected $fillable = [
-        'nome', 'email', 'senha', 'tipo_usuario', 'cpf', 'telefone',
-        'data_nascimento', 'endereco', 'cidade', 'estado', 'cep',
-        'empresa', 'cargo', 'avatar', 'data_cadastro', 'ativo'
+        'email','password','nome_completo','telefone','cpf','data_nascimento','foto_perfil',
+        'tipo_usuario','status',
     ];
 
-    protected $hidden = ['senha'];
+    protected $hidden = ['password'];
 
-    public function cursosComoInstrutor()
+    protected $casts = [
+        'data_nascimento' => 'date:Y-m-d',
+        'data_criacao' => 'datetime',
+        'data_atualizacao' => 'datetime',
+    ];
+
+    public function setPasswordAttribute($value)
     {
-        return $this->hasMany(Curso::class, 'instrutor_id');
+        if (!$value) return;
+        if (is_string($value) && preg_match('/^\$2[ayb]\$.{56}$/', $value)) {
+            $this->attributes['password'] = $value;
+        } else {
+            $this->attributes['password'] = bcrypt($value);
+        }
     }
 
-    public function matriculas()
+    // Perfis
+    public function perfilAluno()     { return $this->hasOne(PerfilAluno::class, 'usuario_id'); }
+    public function perfilProfessor() { return $this->hasOne(PerfilProfessor::class, 'usuario_id'); }
+
+    // Cursos (como professor)
+    public function cursosMinistrados(){ return $this->hasMany(Curso::class, 'professor_id'); }
+
+    // Matrículas (como aluno)
+    public function matriculas()      { return $this->hasMany(Matricula::class, 'aluno_id'); }
+
+    public function getAuthIdentifierName()
     {
-        return $this->hasMany(Matricula::class, 'aluno_id');
+        // TODO: Implement getAuthIdentifierName() method.
     }
 
-    public function anotacoes()
+    public function getAuthIdentifier()
     {
-        return $this->hasMany(Anotacao::class, 'aluno_id');
+        // TODO: Implement getAuthIdentifier() method.
     }
 
-    public function pagamentos()
+    public function getAuthPasswordName()
     {
-        return $this->hasMany(Pagamento::class, 'usuario_id');
+        // TODO: Implement getAuthPasswordName() method.
     }
 
+    public function getAuthPassword()
+    {
+        // TODO: Implement getAuthPassword() method.
+    }
+
+    public function getRememberToken()
+    {
+        // TODO: Implement getRememberToken() method.
+    }
+
+    public function setRememberToken($value)
+    {
+        // TODO: Implement setRememberToken() method.
+    }
+
+    public function getRememberTokenName()
+    {
+        // TODO: Implement getRememberTokenName() method.
+    }
 }

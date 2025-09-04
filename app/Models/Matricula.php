@@ -6,29 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Matricula extends Model
 {
+    protected $table = 'matriculas';
+    public $timestamps = false;
+
     protected $fillable = [
-        'aluno_id', 'curso_id', 'data_matricula', 'data_conclusao',
-        'status', 'progresso_geral', 'tempo_assistido', 'certificado_emitido'
+        'aluno_id','curso_id','data_matricula','data_inicio','data_conclusao','data_vencimento',
+        'progresso_porcentagem','status','nota_final'
     ];
 
     protected $casts = [
-        'data_matricula' => 'datetime',
-        'data_conclusao' => 'datetime',
-        'certificado_emitido' => 'boolean'
+        'data_matricula' => 'datetime', 'data_inicio'=>'datetime',
+        'data_conclusao'=>'datetime', 'data_vencimento'=>'datetime'
     ];
 
-    public function aluno()
-    {
-        return $this->belongsTo(User::class, 'aluno_id');
-    }
-
-    public function curso()
-    {
-        return $this->belongsTo(Curso::class);
-    }
-
-    public function progressoAulas()
-    {
-        return $this->hasMany(ProgressoAula::class);
-    }
+    public function aluno(){ return $this->belongsTo(User::class, 'aluno_id'); }
+    public function curso(){ return $this->belongsTo(Curso::class, 'curso_id'); }
+    public function progresso(){ return $this->hasMany(ProgressoAula::class, 'matricula_id'); }
 }

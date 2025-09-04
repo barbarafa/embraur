@@ -30,7 +30,9 @@ class CursoController extends Controller
 
         $cursos = $query->paginate(12);
 
-        return view('site.catalogo', compact('cursos'));
+        $categorias = Categorias::all();
+
+        return view('site.catalogo', compact('cursos','categorias'));
        // return response()->json($cursos);
     }
 
@@ -57,7 +59,7 @@ class CursoController extends Controller
             'duracao_horas' => 'nullable|integer|min:1',
             'max_alunos' => 'nullable|integer|min:1',
             'imagem_capa' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'tags' => 'nullable|array'
+            'resumo' => 'nullable|string',
         ]);
 
         if ($request->hasFile('imagem_capa')) {

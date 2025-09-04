@@ -4,19 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Modulos extends Model
+class Modulo extends Model
 {
-    protected $fillable = [
-        'curso_id', 'titulo', 'descricao', 'ordem', 'duracao_estimada'
-    ];
+    protected $table = 'modulos';
+    public $timestamps = false;
 
-    public function curso()
-    {
-        return $this->belongsTo(Curso::class);
-    }
+    protected $fillable = ['curso_id','titulo','descricao','ordem'];
 
-    public function aulas()
-    {
-        return $this->hasMany(Aula::class)->orderBy('ordem');
-    }
+    public function curso(){ return $this->belongsTo(Curso::class, 'curso_id'); }
+    public function aulas(){ return $this->hasMany(Aula::class, 'modulo_id')->orderBy('ordem'); }
 }

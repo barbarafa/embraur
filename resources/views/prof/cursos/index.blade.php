@@ -88,6 +88,7 @@
                                         {{ $curso->titulo }}
                                     </div>
                                     <div class="text-xs text-slate-500 mt-0.5">
+                                        {{ $curso->categoria?->nome ? 'Categoria: '.$curso->categoria->nome.' • ' : '' }}
                                         {{ $curso->nivel ? 'Nível: '.$curso->nivel.' • ' : '' }}
                                         {{ $curso->carga_horaria ? $curso->carga_horaria.'h' : '' }}
                                     </div>

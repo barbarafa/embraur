@@ -4,26 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Categoria extends Model
+class Categorias extends Model
 {
-    use HasFactory;
-
     protected $table = 'categorias';
+    public $timestamps = false;
 
-    protected $fillable = [
-        'nome',
-        'descricao',
-        'slug',
-        'ativo'
-    ];
+    protected $fillable = ['nome','descricao','icone','ordem_exibicao'];
 
-    protected $casts = [
-        'ativo' => 'boolean',
-    ];
-
-    // Relacionamentos
-    public function cursos()
-    {
-        return $this->hasMany(Curso::class);
-    }
+    public function cursos(){ return $this->hasMany(Cursos::class, 'categoria_id'); }
 }

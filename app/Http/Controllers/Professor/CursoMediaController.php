@@ -8,29 +8,39 @@ use Illuminate\Http\Request;
 
 class CursoMediaController extends Controller
 {
-    public function uploadCover(Curso $curso, Request $request)
+    public function uploadCover(Request $request, Curso $curso)
     {
-        $this->authz($curso, $request);
-        $request->validate(['capa' => 'required|image|max:4096']);
+        $this->authorizeCurso($curso);
 
-        $curso->capa_path = $request->file('capa')->store('cursos', 'public');
-        $curso->save();
+        $request->validate([
+            'imagem_capa' => 'required|image|mimes:jpeg,png,jpg|max:4096'
+        ]);
 
-        return back()->with('success', 'Capa enviada com sucesso.');
+        // remove capa anterior
+        if ($curso->imagem_capa && Storage::disk('public')->exists($curso->imagem_capa)) {
+            Storage::disk('public')->delete($curso->imagem_capa);
+        }
+
+        $path = $request->file('imagem_capa')->store('cursos/capas', 'public');
+        $curso->update(['imagem_capa' => $path]);
+
+        return back()->with('success','Capa atualizada!');
     }
 
-    public function removeCover(Curso $curso, Request $request)
+    public function removeCover(Curso $curso)
     {
-        $this->authz($curso, $request);
-        $curso->capa_path = null;
-        $curso->save();
+        $this->authorizeCurso($curso);
 
-        return back()->with('success', 'Capa removida.');
+        if ($curso->imagem_capa && Storage::disk('public')->exists($curso->imagem_capa)) {
+            Storage::disk('public')->delete($curso->imagem_capa);
+        }
+        $curso->update(['imagem_capa' => null]);
+
+        return back()->with('success','Capa removida!');
     }
 
-    private function authz(Curso $curso, Request $request)
+    private function authorizeCurso(Curso $curso)
     {
-        $profId = $request->session()->get('prof_id');
-        abort_unless((int)$curso->professor_id === (int)$profId, 403);
+        if ($curso->professor_id != session('prof_id')) abort(403);
     }
 }
