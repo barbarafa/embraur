@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Professor;
 
 use App\Http\Controllers\Controller;
-use App\Models\Curso;
+use App\Models\Cursos;
 use Illuminate\Http\Request;
 
 class CursoMediaController extends Controller
 {
-    public function uploadCover(Request $request, Curso $curso)
+    public function uploadCover(Request $request, Cursos $curso)
     {
         $this->authorizeCurso($curso);
 
@@ -27,7 +27,7 @@ class CursoMediaController extends Controller
         return back()->with('success','Capa atualizada!');
     }
 
-    public function removeCover(Curso $curso)
+    public function removeCover(Cursos $curso)
     {
         $this->authorizeCurso($curso);
 
@@ -39,7 +39,7 @@ class CursoMediaController extends Controller
         return back()->with('success','Capa removida!');
     }
 
-    private function authorizeCurso(Curso $curso)
+    private function authorizeCurso(Cursos $curso)
     {
         if ($curso->professor_id != session('prof_id')) abort(403);
     }

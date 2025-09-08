@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>@yield('title', 'EAD Pro')</title>
+    <title>@yield('title', 'Embraur')</title>
 
     {{-- mantém o seu vite (se já estiver ok, segue usando) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -23,7 +23,7 @@
 <header class="bg-white border-b">
     <div class="container-page flex items-center justify-between h-14">
         <a href="{{ route('site.home') }}" class="flex items-center gap-2 font-semibold">
-            <span class="inline-block w-5 h-5 rounded border border-slate-300"></span> EAD Pro
+            <span class="inline-block w-5 h-5 rounded border border-slate-300"></span> Embraur
         </a>
 
         <nav class="hidden md:flex items-center gap-6 text-sm">
@@ -52,7 +52,7 @@
 <footer class="mt-10 border-t bg-white">
     <div class="container-page py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
         <div>
-            <div class="font-semibold mb-2">EAD Pro</div>
+            <div class="font-semibold mb-2">Embraur</div>
             <p class="text-slate-600">Plataforma completa de ensino a distância com cursos de qualidade e certificação reconhecida.</p>
         </div>
         <div>
@@ -80,7 +80,7 @@
             </ul>
         </div>
     </div>
-    <div class="text-center text-xs text-slate-500 py-4 border-t">© 2024 EAD Pro. Todos os direitos reservados.</div>
+    <div class="text-center text-xs text-slate-500 py-4 border-t">© 2024 Embraur. Todos os direitos reservados.</div>
 </footer>
 </body>
 </html>

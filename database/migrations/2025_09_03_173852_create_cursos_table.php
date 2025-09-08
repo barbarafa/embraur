@@ -22,7 +22,6 @@ return new class extends Migration {
             $table->decimal('preco', 10, 2)->nullable();
             $table->decimal('preco_original', 10, 2)->nullable();
             $table->decimal('nota_minima_aprovacao', 5, 2)->default(0);
-            $table->integer('maximo_alunos')->nullable();
             $table->integer('validade_dias')->nullable();
             $table->enum('status', ['rascunho', 'publicado', 'arquivado'])->default('rascunho');
             $table->timestamp('data_criacao')->useCurrent();

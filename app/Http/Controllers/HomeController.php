@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Curso;
 use App\Models\Cursos;
+
 
 class HomeController extends Controller
 {

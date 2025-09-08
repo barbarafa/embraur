@@ -38,6 +38,6 @@ class Certificados extends Model
 
     public function curso()
     {
-        return $this->hasOneThrough(Curso::class, Matricula::class, 'id', 'id', 'matricula_id', 'curso_id');
+        return $this->hasOneThrough(Cursos::class, Matricula::class, 'id', 'id', 'matricula_id', 'curso_id');
     }
 }

@@ -1,5 +1,5 @@
 <div class="mt-6">
-    <h1 class="text-2xl font-semibold">Olá, {{ $aluno->nome ?? 'Aluno' }}! 👋</h1>
+    <h1 class="text-2xl font-semibold">Olá, {{ $aluno->nome_completo ?? 'Aluno' }}! 👋</h1>
     <p class="text-slate-600 mt-1">Bem-vindo de volta à sua jornada de aprendizado.</p>
 </div>
 

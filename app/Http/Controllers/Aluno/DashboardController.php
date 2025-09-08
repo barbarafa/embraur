@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Aluno;
 use App\Http\Controllers\Controller;
 use App\Models\Aluno;
 use App\Models\Matricula;
+use App\Models\PerfilAluno;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -17,12 +19,12 @@ class DashboardController extends Controller
             return redirect()->route('aluno.login');
         }
 
-        // 2) dados do aluno + matrículas
-        $aluno = Aluno::findOrFail($alunoId);
 
-        $matriculas = Matricula::with(['curso:id,titulo,capa', 'curso.categoria:id,nome'])
+        $aluno = User::where('tipo_usuario', 'aluno')->where('id',$alunoId)->first();
+
+        $matriculas = Matricula::with(['curso:id,titulo,imagem_capa', 'curso.categoria:id,nome'])
             ->where('aluno_id', $alunoId)
-            ->latest()
+            ->latest('matriculas.data_matricula')
             ->get();
 
         // 3) estatísticas (placeholder simples)
@@ -36,16 +38,16 @@ class DashboardController extends Controller
         // 4) continuar aprendendo (mapeia com segurança)
         $continuar = $matriculas->map(function ($m) {
             $curso   = $m->curso;
-            $percent = $m->progresso ?? $curso->progresso ?? 0;
-            $feitas  = $m->aulas_concluidas ?? 0;
-            $total   = $curso->aulas_count ?? 0;
+            $percent = $m->progresso_porcentagem  ?? 0;
+           // $feitas  = $m->aulas_concluidas ?? 0;
+           // $total   = $curso->aulas_count ?? 0;
 
             return [
                 'titulo'       => $curso->titulo ?? 'Curso',
                 'thumb'        => $curso->capa ?? null,
-                'aulas_feitas' => $feitas,
-                'aulas_total'  => $total,
-                'percent'      => (int) $percent,
+             //   'aulas_feitas' => $feitas,
+             //   'aulas_total'  => $total,
+              //  'percent'      => (int) $percent,
                 'link'         => route('aluno.cursos'),
             ];
         })->values();

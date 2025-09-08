@@ -34,10 +34,10 @@
                 Alunos
             </a>
 
-            <a href="{{ route('prof.duvidas.index') }}"
-               class="px-4 py-2 rounded-lg {{ request()->routeIs('prof.duvidas.*') ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                Dúvidas
-            </a>
+{{--            <a href="{{ route('prof.duvidas.index') }}"--}}
+{{--               class="px-4 py-2 rounded-lg {{ request()->routeIs('prof.duvidas.*') ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">--}}
+{{--                Dúvidas--}}
+{{--            </a>--}}
 
             <a href="#"
                class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">

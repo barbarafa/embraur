@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title','EAD Pro - Início')
+@section('title','Embraur')
 
 @section('content')
     {{-- Hero --}}
@@ -70,7 +70,7 @@
                                 @endif
                                 <span class="font-semibold text-blue-700">R$ {{ number_format($curso->preco_final,2,',','.') }}</span>
                             </div>
-                            <a href="{{ route('site.curso.detalhe',$curso->slug) }}" class="btn btn-primary w-full">Ver Detalhes</a>
+                            <a href="{{ route('site.curso.detalhe',$curso->id) }}" class="btn btn-primary w-full">Ver Detalhes</a>
                         </div>
                     </div>
                 @endforeach

@@ -69,10 +69,10 @@
             <button class="px-4 py-2 rounded-lg text-gray-400 cursor-default">Alunos</button>
 
             {{-- << aqui está o ajuste principal --}}
-            <a href="{{ route('prof.duvidas.index') }}"
-               class="px-4 py-2 rounded-lg {{ request()->routeIs('prof.duvidas.*') ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                Dúvidas
-            </a>
+{{--            <a href="{{ route('prof.duvidas.index') }}"--}}
+{{--               class="px-4 py-2 rounded-lg {{ request()->routeIs('prof.duvidas.*') ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">--}}
+{{--                Dúvidas--}}
+{{--            </a>--}}
 
             <button class="px-4 py-2 rounded-lg text-gray-400 cursor-default">Relatórios</button>
         </div>
@@ -105,26 +105,26 @@
             </div>
 
             {{-- Dúvidas Pendentes --}}
-            <div class="rounded-xl border bg-white p-4 shadow-sm">
-                <h3 class="text-lg font-semibold flex items-center gap-2">🗨️ Dúvidas Pendentes</h3>
+{{--            <div class="rounded-xl border bg-white p-4 shadow-sm">--}}
+{{--                <h3 class="text-lg font-semibold flex items-center gap-2">🗨️ Dúvidas Pendentes</h3>--}}
 
-                @foreach($duvidas as $d)
-                    <div class="rounded-lg border p-3 mt-3">
-                        <div class="flex items-center justify-between">
-                            <div class="font-medium">{{ $d['aluno'] }}</div>
-                            <div class="text-xs text-slate-500">{{ $d['quando'] }}</div>
-                        </div>
-                        <div class="text-xs text-slate-500">{{ $d['curso'] }}</div>
-                        <p class="text-sm mt-2">{{ $d['texto'] }}</p>
+{{--                @foreach($duvidas as $d)--}}
+{{--                    <div class="rounded-lg border p-3 mt-3">--}}
+{{--                        <div class="flex items-center justify-between">--}}
+{{--                            <div class="font-medium">{{ $d['aluno'] }}</div>--}}
+{{--                            <div class="text-xs text-slate-500">{{ $d['quando'] }}</div>--}}
+{{--                        </div>--}}
+{{--                        <div class="text-xs text-slate-500">{{ $d['curso'] }}</div>--}}
+{{--                        <p class="text-sm mt-2">{{ $d['texto'] }}</p>--}}
 
-                        {{-- Botão leva para a tela de Dúvidas --}}
-                        <a href="{{ route('prof.duvidas.index') }}"
-                           class="btn-primary text-xs px-3 py-1 rounded-md mt-2">
-                            Responder
-                        </a>
-                    </div>
-                @endforeach
-            </div>
+{{--                        --}}{{-- Botão leva para a tela de Dúvidas --}}
+{{--                        <a href="{{ route('prof.duvidas.index') }}"--}}
+{{--                           class="btn-primary text-xs px-3 py-1 rounded-md mt-2">--}}
+{{--                            Responder--}}
+{{--                        </a>--}}
+{{--                    </div>--}}
+{{--                @endforeach--}}
+{{--            </div>--}}
         </div>
     </div>
 @endsection

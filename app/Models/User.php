@@ -49,10 +49,17 @@ class User extends Model implements Authenticatable
     public function perfilProfessor() { return $this->hasOne(PerfilProfessor::class, 'usuario_id'); }
 
     // Cursos (como professor)
-    public function cursosMinistrados(){ return $this->hasMany(Curso::class, 'professor_id'); }
+    public function cursosMinistrados(){ return $this->hasMany(Cursos::class, 'professor_id'); }
 
     // Matrículas (como aluno)
     public function matriculas()      { return $this->hasMany(Matricula::class, 'aluno_id'); }
+
+    public function cursos()
+    {
+        // pega cursos via pivot 'matriculas' e expõe campos úteis da matrícula
+        return $this->belongsToMany(Cursos::class, 'matriculas', 'aluno_id', 'curso_id')
+            ->withPivot(['progresso_porcentagem', 'status', 'data_matricula']);
+    }
 
     public function getAuthIdentifierName()
     {

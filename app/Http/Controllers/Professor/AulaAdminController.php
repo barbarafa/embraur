@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Professor;
 
 use App\Http\Controllers\Controller;
-use App\Models\Curso;
-use App\Models\Modulo;
+use App\Models\Cursos;
+use App\Models\Modulos;
 use App\Models\Aula;
 use Illuminate\Http\Request;
 
 class AulaAdminController extends Controller
 {
-    public function index(Curso $curso, Modulo $modulo)
+    public function index(Cursos $curso, Modulos $modulo)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -19,7 +19,7 @@ class AulaAdminController extends Controller
         return view('prof.aulas.index', compact('curso','modulo','aulas'));
     }
 
-    public function store(Request $request, Curso $curso, Modulo $modulo)
+    public function store(Request $request, Cursos $curso, Modulos $modulo)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -42,7 +42,7 @@ class AulaAdminController extends Controller
         return back()->with('success','Aula criada!');
     }
 
-    public function update(Request $request, Curso $curso, Modulo $modulo, Aula $aula)
+    public function update(Request $request, Cursos $curso, Modulos $modulo, Aula $aula)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -65,7 +65,7 @@ class AulaAdminController extends Controller
         return back()->with('success','Aula atualizada!');
     }
 
-    public function destroy(Curso $curso, Modulo $modulo, Aula $aula)
+    public function destroy(Cursos $curso, Modulos $modulo, Aula $aula)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -75,7 +75,7 @@ class AulaAdminController extends Controller
         return back()->with('success','Aula removida.');
     }
 
-    public function reorder(Request $request, Curso $curso, Modulo $modulo)
+    public function reorder(Request $request, Cursos $curso, Modulos $modulo)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -91,7 +91,7 @@ class AulaAdminController extends Controller
     }
 
     // Upload/Remoção de materiais da aula (links nas rotas)
-    public function uploadMedia(Request $request, Curso $curso, Modulo $modulo, Aula $aula)
+    public function uploadMedia(Request $request, Cursos $curso, Modulos $modulo, Aula $aula)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -114,7 +114,7 @@ class AulaAdminController extends Controller
         return back()->with('success','Material enviado!');
     }
 
-    public function removeMedia(Curso $curso, Modulo $modulo, Aula $aula, MaterialApoio $media)
+    public function removeMedia(Cursos $curso, Modulos $modulo, Aula $aula, MaterialApoio $media)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -131,15 +131,15 @@ class AulaAdminController extends Controller
         return back()->with('success','Material removido!');
     }
 
-    private function authorizeCurso(Curso $curso)
+    private function authorizeCurso(Cursos $curso)
     {
         if ($curso->professor_id != session('prof_id')) abort(403);
     }
-    private function authorizeModulo(Curso $curso, Modulo $modulo)
+    private function authorizeModulo(Cursos $curso, Modulos $modulo)
     {
         if ($modulo->curso_id != $curso->id) abort(404);
     }
-    private function authorizeAula(Modulo $modulo, Aula $aula)
+    private function authorizeAula(Modulos $modulo, Aula $aula)
     {
         if ($aula->modulo_id != $modulo->id) abort(404);
     }

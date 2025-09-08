@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Curso;
+use App\Models\Cursos;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -12,7 +12,7 @@ class ProfessorController extends Controller
     {
         $professor = auth()->user();
 
-        $cursos = Curso::where('instrutor_id', $professor->id)
+        $cursos = Cursos::where('instrutor_id', $professor->id)
             ->withCount(['matriculas', 'avaliacoes'])
             ->get();
 

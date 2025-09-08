@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\Professor;
 
 use App\Http\Controllers\Controller;
-use App\Models\Curso;
-use App\Models\Modulo;
+use App\Models\Cursos;
+use App\Models\Modulos;
 use Illuminate\Http\Request;
 
 class ModuloAdminController extends Controller
 {
-    public function index(Curso $curso)
+    public function index(Cursos $curso)
     {
         $this->authorizeCurso($curso);
         $modulos = $curso->modulos()->get();
         return view('prof.modulos.index', compact('curso','modulos'));
     }
 
-    public function store(Request $request, Curso $curso)
+    public function store(Request $request, Cursos $curso)
     {
         $this->authorizeCurso($curso);
 
@@ -27,12 +27,12 @@ class ModuloAdminController extends Controller
         ]);
 
         $data['curso_id'] = $curso->id;
-        Modulo::create($data);
+        Modulos::create($data);
 
         return back()->with('success','Módulo criado!');
     }
 
-    public function update(Request $request, Curso $curso, Modulo $modulo)
+    public function update(Request $request, Cursos $curso, Modulos $modulo)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -48,7 +48,7 @@ class ModuloAdminController extends Controller
         return back()->with('success','Módulo atualizado!');
     }
 
-    public function destroy(Curso $curso, Modulo $modulo)
+    public function destroy(Cursos $curso, Modulos $modulo)
     {
         $this->authorizeCurso($curso);
         $this->authorizeModulo($curso, $modulo);
@@ -57,7 +57,7 @@ class ModuloAdminController extends Controller
         return back()->with('success','Módulo removido.');
     }
 
-    public function reorder(Request $request, Curso $curso)
+    public function reorder(Request $request, Cursos $curso)
     {
         $this->authorizeCurso($curso);
 
@@ -66,18 +66,18 @@ class ModuloAdminController extends Controller
         ]);
 
         foreach ($data['ordens'] as $it) {
-            Modulo::where('id', $it['id'])->where('curso_id',$curso->id)->update(['ordem'=>$it['ordem']]);
+            Modulos::where('id', $it['id'])->where('curso_id',$curso->id)->update(['ordem'=>$it['ordem']]);
         }
 
         return back()->with('success','Ordenação salva!');
     }
 
-    private function authorizeCurso(Curso $curso)
+    private function authorizeCurso(Cursos $curso)
     {
         if ($curso->professor_id != session('prof_id')) abort(403);
     }
 
-    private function authorizeModulo(Curso $curso, Modulo $modulo)
+    private function authorizeModulo(Cursos $curso, Modulos $modulo)
     {
         if ($modulo->curso_id != $curso->id) abort(404);
     }

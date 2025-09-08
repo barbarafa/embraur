@@ -10,5 +10,5 @@ class TagCursos extends Model
     public $timestamps = false;
 
     protected $fillable = ['curso_id','tag'];
-    public function curso(){ return $this->belongsTo(Curso::class, 'curso_id'); }
+    public function curso(){ return $this->belongsTo(Cursos::class, 'curso_id'); }
 }

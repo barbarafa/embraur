@@ -20,6 +20,6 @@ class Matricula extends Model
     ];
 
     public function aluno(){ return $this->belongsTo(User::class, 'aluno_id'); }
-    public function curso(){ return $this->belongsTo(Curso::class, 'curso_id'); }
+    public function curso(){ return $this->belongsTo(Cursos::class, 'curso_id'); }
     public function progresso(){ return $this->hasMany(ProgressoAula::class, 'matricula_id'); }
 }

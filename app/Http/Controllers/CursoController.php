@@ -42,10 +42,12 @@ class CursoController extends Controller
             'categoria',
             'instrutor',
             'modulos.aulas',
-            'avaliacoes.usuario'
+            //'avaliacoes.usuario'
         ])->findOrFail($id);
 
-        return response()->json($curso);
+        return view('site.curso-detalhe', compact('curso'));
+
+//        return response()->json($curso);
     }
 
     public function store(Request $request)
@@ -57,7 +59,6 @@ class CursoController extends Controller
             'nivel' => 'required|in:Iniciante,Intermediário,Avançado',
             'preco' => 'nullable|numeric|min:0',
             'duracao_horas' => 'nullable|integer|min:1',
-            'max_alunos' => 'nullable|integer|min:1',
             'imagem_capa' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'resumo' => 'nullable|string',
         ]);

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Professor;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Matricula; // cada matrícula liga aluno a curso
-use App\Models\Curso;
+use App\Models\Cursos;
 
 class ProfessorAlunoController extends Controller
 {

@@ -16,12 +16,12 @@
                                 <div class="w-10 h-10 bg-gray-200 rounded-md"></div>
                                 <div class="flex-1">
                                     <div class="text-sm font-medium">{{ $item['titulo'] }}</div>
-                                    <div class="w-full bg-gray-100 h-2 rounded mt-2">
-                                        <div class="bg-blue-600 h-2 rounded" style="width: {{ $item['percent'] }}%"></div>
-                                    </div>
-                                    <div class="text-xs text-slate-500 mt-1">
-                                        {{ $item['aulas_feitas'] }}/{{ $item['aulas_total'] }} aulas • {{ $item['percent'] }}%
-                                    </div>
+{{--                                    <div class="w-full bg-gray-100 h-2 rounded mt-2">--}}
+{{--                                        <div class="bg-blue-600 h-2 rounded" style="width: {{ $item['percent'] }}%"></div>--}}
+{{--                                    </div>--}}
+{{--                                    <div class="text-xs text-slate-500 mt-1">--}}
+{{--                                        {{ $item['aulas_feitas'] }}/{{ $item['aulas_total'] }} aulas • {{ $item['percent'] }}%--}}
+{{--                                    </div>--}}
                                 </div>
                                 <a href="{{ $item['link'] }}" class="btn-primary text-xs px-3 py-1 rounded-md">Continuar</a>
                             </div>

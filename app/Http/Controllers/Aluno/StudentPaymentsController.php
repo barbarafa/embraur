@@ -7,12 +7,13 @@ use Illuminate\Http\Request;
 
 class StudentPaymentsController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $rq)
     {
-        $aluno = $request->user('aluno');
-        $pagamentos = []; // preencha com suas faturas/boletos etc.
+        $alunoId = auth('aluno')->id() ?? $rq->session()->get('aluno_id');
+        $pagamentos = \App\Models\Pagamento::with('matricula.curso')
+            ->where('aluno_id',$alunoId)->latest()->get();
 
-        return view('aluno.pagamentos', compact('aluno','pagamentos'));
+        return view('aluno.pagamentos', compact('pagamentos'));
     }
 }
 
