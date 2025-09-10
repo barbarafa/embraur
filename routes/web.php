@@ -1,10 +1,8 @@
 <?php
 
-use App\Http\Controllers\Aluno\AlunoQuizController;
-use App\Http\Controllers\Aluno\CursoConteudoController;
-use App\Http\Controllers\AulaProgressoController;
-use App\Http\Controllers\CheckoutController;
 use Illuminate\Support\Facades\Route;
+
+// Site (público)
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\CursoController;
 
@@ -16,6 +14,10 @@ use App\Http\Controllers\Aluno\StudentCoursesController;
 use App\Http\Controllers\Aluno\StudentCertificatesController;
 use App\Http\Controllers\Aluno\StudentPaymentsController;
 use App\Http\Controllers\Aluno\StudentProfileController;
+use App\Http\Controllers\Aluno\CursoConteudoController;
+use App\Http\Controllers\Aluno\AlunoQuizController;
+use App\Http\Controllers\AulaProgressoController;
+use App\Http\Controllers\CheckoutController;
 
 // ===== PROFESSOR
 use App\Http\Controllers\Auth\ProfessorAuthController;
@@ -26,7 +28,8 @@ use App\Http\Controllers\Professor\ModuloAdminController;
 use App\Http\Controllers\Professor\AulaAdminController;
 use App\Http\Controllers\Professor\DuvidaController;
 use App\Http\Controllers\Professor\ProfessorAlunoController;
-use \App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Professor\QuizController as ProfessorQuizController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,8 +39,6 @@ use \App\Http\Controllers\Auth\AuthController;
 Route::get('/', [HomeController::class, 'index'])->name('site.home');
 Route::get('/catalogo', [CursoController::class, 'index'])->name('site.cursos');
 Route::get('/curso/{id}', [CursoController::class, 'show'])->name('site.curso.detalhe');
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +56,8 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
 
     // Protegido
     Route::middleware('aluno.auth')->group(function () {
+
+        // Dashboard e menus
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::post('matricular/{curso}', [MatriculaController::class, 'store'])->name('matricular');
 
@@ -63,20 +66,48 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
         Route::get('pagamentos', [StudentPaymentsController::class, 'index'])->name('pagamentos');
         Route::get('perfil', [StudentProfileController::class, 'index'])->name('perfil');
 
-        Route::get('cursos/{curso}/quiz/{quiz}', [AlunoQuizController::class, 'show'])->name('quiz.show');
-        Route::post('cursos/{curso}/quiz/{quiz}', [AlunoQuizController::class, 'submit'])->name('quiz.submit');
+        /**
+         * CONTEÚDO DO CURSO (player + sidebar)
+         */
+        Route::get('cursos/{curso}', [CursoConteudoController::class, 'show'])
+            ->name('curso.conteudo');
 
-        // progresso de aula (vídeo/qualquer)
+        Route::get('cursos/{curso}/modulos/{modulo}', [CursoConteudoController::class, 'showModulo'])
+            ->name('curso.modulo');
+
+        Route::get('cursos/{curso}/modulos/{modulo}/aulas/{aula}', [CursoConteudoController::class, 'showAula'])
+            ->name('curso.modulo.aula');
+
+        /**
+         * PROGRESSO DE AULA
+         */
         Route::get('aulas/{aula}/progresso', [AulaProgressoController::class, 'show'])->name('aula.progresso.show');
         Route::post('aulas/{aula}/progresso', [AulaProgressoController::class, 'store'])->name('aula.progresso.store');
 
-        Route::get('aluno/cursos/{curso}', [CursoConteudoController::class, 'show'])->name('aluno.curso.conteudo');
-        // carrinho
+        /**
+         * QUIZ (prova do módulo)
+         */
+        Route::get('cursos/{curso}/quiz/{quiz}', [AlunoQuizController::class, 'show'])
+            ->name('quiz.show');
+
+        Route::post('cursos/{curso}/quiz/{quiz}', [AlunoQuizController::class, 'submit'])
+            ->name('quiz.submit');
+
+        // 🔧 Ajuste: {tentativa} para bater com QuizTentativa $tentativa
+        Route::get('cursos/{curso}/quiz/{quiz}/resultado/{tentativa}', [AlunoQuizController::class, 'result'])
+            ->name('quiz.result');
+
+        Route::get('cursos/{curso}/quiz/{quiz}/refazer', [AlunoQuizController::class, 'refazer'])
+            ->name('quiz.refazer');
+
+
+        /**
+         * Carrinho/Checkout
+         */
         Route::post('carrinho/add/{curso}', [CheckoutController::class, 'add'])->name('carrinho.add');
         Route::post('carrinho/remove/{curso}', [CheckoutController::class, 'remove'])->name('carrinho.remove');
         Route::get('carrinho', [CheckoutController::class, 'cart'])->name('carrinho');
 
-        // checkout (Mercado Pago)
         Route::post('checkout', [CheckoutController::class, 'checkout'])->name('checkout');
         Route::get('checkout/sucesso', [CheckoutController::class, 'success'])->name('checkout.sucesso');
         Route::get('checkout/falha', [CheckoutController::class, 'failure'])->name('checkout.falha');
@@ -108,11 +139,11 @@ Route::prefix('prof')->name('prof.')->group(function () {
         // Dashboard
         Route::get('dashboard', [ProfessorDashboardController::class, 'index'])->name('dashboard');
 
-        // Dúvidas (aba "Dúvidas")
+        // Dúvidas
         Route::get('duvidas', [DuvidaController::class, 'index'])->name('duvidas.index');
         Route::post('duvidas/{duvida}/lida', [DuvidaController::class, 'markRead'])->name('duvidas.markRead');
 
-        // Alunos (aba "Alunos")
+        // Alunos
         Route::get('alunos', [ProfessorAlunoController::class, 'index'])->name('alunos.index');
 
         // Cursos (CRUD)
@@ -145,8 +176,8 @@ Route::prefix('prof')->name('prof.')->group(function () {
         Route::post('cursos/{curso}/modulos/{modulo}/aulas/{aula}/midia', [AulaAdminController::class, 'uploadMedia'])->name('cursos.modulos.aulas.media.upload');
         Route::delete('cursos/{curso}/modulos/{modulo}/aulas/{aula}/midia/{media}', [AulaAdminController::class, 'removeMedia'])->name('cursos.modulos.aulas.media.remove');
 
-        //Quiz
-        Route::resource('cursos.quizzes', QuizController::class)->shallow();     // /prof/cursos/{curso}/quizzes
-        Route::resource('modulos.quizzes', QuizController::class)->shallow();    // /prof/modulos/{modulo}/quizzes
+        // Quiz do professor (CRUD) — usando alias para evitar conflito com AlunoQuizController
+        Route::resource('cursos.quizzes', ProfessorQuizController::class)->shallow();     // /prof/cursos/{curso}/quizzes
+        Route::resource('modulos.quizzes', ProfessorQuizController::class)->shallow();    // /prof/modulos/{modulo}/quizzes
     });
 });

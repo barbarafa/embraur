@@ -270,7 +270,6 @@ class SstSeed extends Seeder
                     'preco'                 => $cData['preco'],
                     'preco_original'        => $cData['preco_original'],
                     'nota_minima_aprovacao' => $cData['nota_minima_aprovacao'],
-                    'maximo_alunos'         => 0,
                     'status'     => $cData['status']
 
                 ]);
