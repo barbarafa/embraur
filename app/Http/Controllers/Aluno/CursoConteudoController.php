@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class CursoConteudoController extends Controller
 {
-    public function show(Request $request, Cursos $curso)
+    public function show(Request $request, Cursos $curso, ?Modulos $modulo = null, ?Aulas $aula = null)
     {
         $alunoId = auth('aluno')->id() ?? $request->session()->get('aluno_id');
         abort_if(!$alunoId, 403);
@@ -17,17 +17,26 @@ class CursoConteudoController extends Controller
             ->where('curso_id', $curso->id)
             ->firstOrFail();
 
-        // carrega tudo para a página (sidebar + player)
+        // carrega relações usadas na página
         $curso->load(['modulos.aulas', 'modulos.quiz']);
 
+        // 1) Usa os parâmetros, se vierem válidos
+        if ($modulo && (int)$modulo->curso_id !== (int)$curso->id) {
+            $modulo = null;
+            $aula = null;
+        }
+        if ($modulo && $aula && (int)$aula->modulo_id !== (int)$modulo->id) {
+            $aula = null;
+        }
 
-        // escolhe módulo/aula atuais (padrão: primeiro módulo/aula)
-        $moduloAtual = $curso->modulos->sortBy('ordem')->values()->first();
+        // 2) Fallback: primeiro módulo/aula
+        $moduloAtual = $modulo ?: $curso->modulos->sortBy('ordem')->values()->first();
         abort_if(!$moduloAtual, 404, 'Curso sem módulos.');
-        $aulaAtual = $moduloAtual->aulas->sortBy('ordem')->values()->first();
+
+        $aulaAtual = $aula ?: $moduloAtual->aulas->sortBy('ordem')->values()->first();
         abort_if(!$aulaAtual, 404, 'Módulo sem aulas.');
 
-        // Gate de acesso ao módulo (se tiver helper)
+        // Gate de acesso ao módulo
         $modIndex = $curso->modulos->sortBy('ordem')->values()
             ->search(fn($m) => (int)$m->id === (int)$moduloAtual->id);
         if (class_exists(\App\Support\CursoGate::class)) {
@@ -35,13 +44,13 @@ class CursoConteudoController extends Controller
             abort_if(!$pode, 403, 'Módulo bloqueado até aprovação no anterior.');
         }
 
-        // navegação (dentro do módulo)
+        // Navegação dentro do módulo
         $aulasOrdenadas = $moduloAtual->aulas->sortBy('ordem')->values();
         $idx = $aulasOrdenadas->search(fn($x) => (int)$x->id === (int)$aulaAtual->id);
         $prevAula = $idx > 0 ? $aulasOrdenadas[$idx - 1] : null;
         $nextAula = $idx < ($aulasOrdenadas->count() - 1) ? $aulasOrdenadas[$idx + 1] : null;
 
-        // status das provas por módulo (para os badges Pend/OK/Reprovado)
+        // Status das provas por módulo
         $quizIds = $curso->modulos->pluck('quiz.id')->filter()->values();
         $ultimaTentativaPorQuiz = collect();
         if ($quizIds->isNotEmpty()) {

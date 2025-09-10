@@ -75,7 +75,7 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
         Route::get('cursos/{curso}/modulos/{modulo}', [CursoConteudoController::class, 'showModulo'])
             ->name('curso.modulo');
 
-        Route::get('cursos/{curso}/modulos/{modulo}/aulas/{aula}', [CursoConteudoController::class, 'showAula'])
+        Route::get('cursos/{curso}/modulos/{modulo}/aulas/{aula}', [CursoConteudoController::class, 'show'])
             ->name('curso.modulo.aula');
 
         /**
