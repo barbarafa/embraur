@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Matricula;
+use App\Models\Matriculas;
 use App\Models\ProgressoAula;
 use Illuminate\Http\Request;
 
@@ -12,7 +12,7 @@ class AlunoController extends Controller
     {
         $user = auth()->user();
 
-        $matriculas = Matricula::where('aluno_id', $user->id)
+        $matriculas = Matriculas::where('aluno_id', $user->id)
             ->with(['curso.categoria', 'curso.instrutor'])
             ->get();
 
@@ -32,7 +32,7 @@ class AlunoController extends Controller
 
     public function coursePlayer($courseId)
     {
-        $matricula = Matricula::where('aluno_id', auth()->id())
+        $matricula = Matriculas::where('aluno_id', auth()->id())
             ->where('curso_id', $courseId)
             ->with([
                 'curso.modulos.aulas',
@@ -51,7 +51,7 @@ class AlunoController extends Controller
             'concluida' => 'boolean'
         ]);
 
-        $matricula = Matricula::where('aluno_id', auth()->id())
+        $matricula = Matriculas::where('aluno_id', auth()->id())
             ->whereHas('curso.modulos.aulas', function($q) use ($aulaId) {
                 $q->where('id', $aulaId);
             })

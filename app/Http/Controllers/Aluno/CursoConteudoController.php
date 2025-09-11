@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Aluno;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Cursos, Matricula, Modulos, Aulas, QuizTentativa};
+use App\Models\{Cursos, Matriculas, Modulos, Aulas, QuizTentativa};
 use Illuminate\Http\Request;
 
 class CursoConteudoController extends Controller
@@ -13,7 +13,7 @@ class CursoConteudoController extends Controller
         $alunoId = auth('aluno')->id() ?? $request->session()->get('aluno_id');
         abort_if(!$alunoId, 403);
 
-        $matricula = Matricula::where('aluno_id', $alunoId)
+        $matricula = Matriculas::where('aluno_id', $alunoId)
             ->where('curso_id', $curso->id)
             ->firstOrFail();
 

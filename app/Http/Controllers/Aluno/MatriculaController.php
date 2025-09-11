@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Aluno;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cursos;
-use App\Models\Matricula;
+use App\Models\Matriculas;
 use Illuminate\Http\Request;
 
 class MatriculaController extends Controller
@@ -13,7 +13,7 @@ class MatriculaController extends Controller
     {
         $alunoId = $request->session()->get('aluno_id');
 
-        Matricula::firstOrCreate([
+        Matriculas::firstOrCreate([
             'aluno_id' => $alunoId,
             'curso_id' => $curso->id,
         ]);

@@ -3,13 +3,13 @@
 namespace App\Support;
 
 use App\Models\Cursos;
-use App\Models\Matricula;
+use App\Models\Matriculas;
 use App\Models\Quiz;
 
 class CursoGate
 {
     // retorna true se aluno pode acessar $moduloIndex (0-based)
-    public static function podeAcessarModulo(Cursos $curso, Matricula $matricula, int $moduloIndex): bool
+    public static function podeAcessarModulo(Cursos $curso, Matriculas $matricula, int $moduloIndex): bool
     {
         if ($moduloIndex === 0) return true;
 

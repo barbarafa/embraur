@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Pagamento, Matricula, Cursos};
+use App\Models\{Pagamentos, Matriculas, Cursos};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -24,7 +24,7 @@ class MercadoPagoWebhookController extends Controller
         if (!$externalRef) return response()->json(['ignored'=>true]);
 
         DB::transaction(function() use ($externalRef, $paymentId, $status, $data) {
-            $pg = Pagamento::where('external_reference', $externalRef)->lockForUpdate()->first();
+            $pg = Pagamentos::where('external_reference', $externalRef)->lockForUpdate()->first();
             if (!$pg) return;
 
             $pg->update([
@@ -35,7 +35,7 @@ class MercadoPagoWebhookController extends Controller
 
             if (in_array($status, ['approved','accredited','succeeded','approved_partially'])) {
                 // Criar matrículas para todos os cursos presentes originalmente
-                // Para simplificar: assuma que você salvou os itens no Pagamento (poderia ter uma tabela pagamento_itens).
+                // Para simplificar: assuma que você salvou os itens no Pagamentos (poderia ter uma tabela pagamento_itens).
                 // Alternativa simples: um pagamento = 1 curso; se for carrinho, amplie com pagamento_itens.
             }
         });

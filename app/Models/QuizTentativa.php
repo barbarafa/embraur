@@ -38,7 +38,7 @@ class QuizTentativa extends Model
 
     public function matricula()
     {
-        return $this->belongsTo(Matricula::class, 'matricula_id');
+        return $this->belongsTo(Matriculas::class, 'matricula_id');
     }
 
     public function respostas()

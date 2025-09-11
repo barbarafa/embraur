@@ -43,7 +43,7 @@
         </div>
     </section>
 
-    {{-- Cursos Populares --}}
+    {{-- Cursos.php Populares --}}
     <section class="py-12">
         <div class="mx-auto container-page px-4">
             <h2 class="text-2xl font-bold text-center">Cursos Populares</h2>

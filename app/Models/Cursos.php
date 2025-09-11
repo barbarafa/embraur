@@ -57,7 +57,12 @@ class Cursos extends Model
 
     public function matriculas()
     {
-        return $this->hasMany(Matricula::class, 'curso_id');
+        return $this->hasMany(Matriculas::class, 'curso_id');
+    }
+
+    public function professor()
+    {
+        return $this->belongsTo(Professor::class, 'professor_id');
     }
 
     /**
@@ -116,7 +121,7 @@ class Cursos extends Model
     {
         return self::query()
             ->select(
-                'cursos.*',
+                'cursos.id',
                 'matriculas.progresso_porcentagem',
                 'matriculas.status',
                 'matriculas.data_matricula'
@@ -128,6 +133,9 @@ class Cursos extends Model
             ->orderByDesc('matriculas.data_matricula')
             ->get();
     }
+
+
+
 
     /**
      * (Opcional) Se quiser usar slug nas rotas: habilite e ajuste Route Model Binding.

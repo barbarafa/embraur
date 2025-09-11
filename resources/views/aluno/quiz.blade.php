@@ -4,30 +4,33 @@
 
 @section('content')
     <style>
-        /* Garante 1 pergunta por vez */
-        .quiz-question { display: none; }
-        .quiz-question.active { display: block; }
+        /* 1 questão por vez */
+        .quiz-question{display:none}
+        .quiz-question.active{display:block}
+
+        /* Sidebar fixa */
+        .sticky-col{position:sticky; top:96px}
     </style>
 
     <div class="container mx-auto py-6">
 
-        {{-- HEADER (estilo referência) --}}
+        {{-- HEADER --}}
         <div class="rounded-lg border p-4 mb-6">
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <h1 class="text-lg font-semibold">{{ $quiz->titulo }}</h1>
 
-                    {{-- Subtítulo (usa a descrição do quiz se existir, senão mostra o nome do curso) --}}
+                    {{-- Subtítulo (usa descrição do quiz; se não tiver, usa nome do curso) --}}
                     <p class="text-sm text-slate-600">
                         {{ $quiz->descricao ?? ('Avaliação dos conceitos de ' . ($curso->titulo ?? '')) }}
                     </p>
 
                     <div class="mt-2 flex items-center gap-2">
                         <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-xs font-medium">
-                          Nota mínima: {{ number_format((float)($curso->nota_minima_aprovacao ?? 7),1,',','.') }}
+                            Nota mínima: {{ number_format((float)($curso->nota_minima_aprovacao ?? 7),1,',','.') }}
                         </span>
                         <span class="inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-xs font-medium">
-                          <span id="respondidasLabel">0 de {{ $quiz->questoes->count() }} respondidas</span>
+                            <span id="respondidasLabel">0 de {{ $quiz->questoes->count() }} respondidas</span>
                         </span>
                     </div>
                 </div>
@@ -38,13 +41,11 @@
                 </a>
             </div>
 
-            {{-- Linha título do progresso + percentual --}}
+            {{-- Progresso + percentual --}}
             <div class="mt-4 flex items-center justify-between text-sm text-slate-600">
                 <span>Progresso do quiz</span>
                 <span id="pctLabel">0%</span>
             </div>
-
-            {{-- Barra de progresso --}}
             <div class="w-full h-2 rounded-full bg-slate-200 mt-2 overflow-hidden">
                 <div id="barraProgresso" class="h-full bg-blue-600 transition-all" style="width:0%"></div>
             </div>
@@ -53,26 +54,23 @@
         <form method="POST" action="{{ route('aluno.quiz.submit', [$curso->id, $quiz->id]) }}" id="formQuiz">
             @csrf
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                {{-- COLUNA ÚNICA (sem sidebar de curso) --}}
-                <div class="lg:col-span-12">
+                {{-- COLUNA ESQUERDA (conteúdo do quiz) --}}
+                <div class="md:col-span-8 lg:col-span-9">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                        {{-- Navegação (pílulas) --}}
-                        <div class="md:col-span-3">
+                        {{-- Navegação (pílulas) – visível no mobile/tablet --}}
+                        <div class="md:col-span-4 lg:hidden">
                             <div class="rounded-lg border p-4">
                                 <div class="font-semibold mb-3">Navegação</div>
-                                <div class="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-4 gap-2">
+                                <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
                                     @foreach($quiz->questoes as $i => $q)
                                         <button type="button"
                                                 class="pill w-9 h-9 rounded border text-sm flex items-center justify-center hover:bg-slate-50"
-                                                data-go="{{ $i }}">
-                                            {{ $i+1 }}
-                                        </button>
+                                                data-go="{{ $i }}">{{ $i+1 }}</button>
                                     @endforeach
                                 </div>
-
                                 <div class="mt-4 space-y-1 text-xs text-slate-500">
                                     <div class="flex items-center gap-2">
                                         <span class="w-3 h-3 rounded-full bg-slate-300 inline-block"></span> Não respondida
@@ -87,11 +85,10 @@
                             </div>
                         </div>
 
-                        {{-- QUESTÃO (uma por vez) --}}
-                        <div class="md:col-span-9">
+                        {{-- Área de questão (1 por vez) --}}
+                        <div class="md:col-span-8 lg:col-span-12">
                             @foreach($quiz->questoes as $k => $q)
-                                <div class="quiz-question rounded-lg border p-4 mb-4 {{ $k === 0 ? 'active' : '' }}"
-                                     data-index="{{ $k }}">
+                                <div class="quiz-question rounded-lg border p-4 mb-4 {{ $k===0 ? 'active' : '' }}" data-index="{{ $k }}">
                                     <div class="flex items-center justify-between">
                                         <div class="font-semibold">Questão {{ $k+1 }} de {{ $quiz->questoes->count() }}</div>
                                         <div class="text-xs text-slate-500">
@@ -129,12 +126,11 @@
                                 <div class="flex items-center gap-2">
                                     <button type="button" id="btnPrev"
                                             class="px-3 py-2 border rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        &larr; Anterior
+                                        ← Anterior
                                     </button>
-
                                     <button type="button" id="btnNext"
                                             class="px-3 py-2 border rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        Próxima &rarr;
+                                        Próxima →
                                     </button>
                                 </div>
 
@@ -149,7 +145,105 @@
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
+                {{-- COLUNA DIREITA (conteúdo do curso – igual ao player) --}}
+                <div class="md:col-span-4 lg:col-span-3">
+                    <div class="sticky-col">
+                        <div class="rounded-lg border p-4">
+                            <h3 class="font-semibold mb-3">Conteúdo do Curso</h3>
+
+                            @php
+                                // Última tentativa por quiz (p/ pintar badge OK/Reprovado/Pend.)
+                                $quizIds = $curso->modulos->pluck('quiz.id')->filter()->values();
+                                $ultimas = collect();
+                                if ($quizIds->isNotEmpty()) {
+                                    $ultimas = \App\Models\QuizTentativa::where('aluno_id', $matricula->aluno_id)
+                                        ->whereIn('quiz_id', $quizIds)
+                                        ->orderByDesc('id')
+                                        ->get()
+                                        ->groupBy('quiz_id')
+                                        ->map->first();
+                                }
+
+                                // Módulo atual = módulo deste quiz
+                                $moduloAtualId = $quiz->modulo_id ?? optional($quiz->modulo)->id;
+                            @endphp
+
+                            @foreach($curso->modulos->sortBy('ordem') as $idx => $m)
+                                @php
+                                    $isAtual  = (int)$m->id === (int)$moduloAtualId;
+                                    $qz       = $m->quiz ?? null;
+                                    $tent     = $qz ? ($ultimas->get($qz->id) ?? null) : null;
+                                    $status   = $tent ? ($tent->aprovado ? 'ok' : 'reprov') : 'pend';
+
+                                    // trava visual (se você usa gate de módulos)
+                                    $modLiberado = true;
+                                    if (class_exists(\App\Support\CursoGate::class)) {
+                                        $modLiberado = \App\Support\CursoGate::podeAcessarModulo($curso, $matricula, $idx);
+                                    }
+                                @endphp
+
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="font-medium">
+                                            Módulo {{ $idx+1 }} — {{ $m->titulo }}
+                                        </div>
+                                        @if(!$modLiberado)
+                                            <span class="text-[11px] text-amber-700">Bloqueado</span>
+                                        @elseif($isAtual)
+                                            <span class="text-[11px] text-blue-600">Atual</span>
+                                        @endif
+                                    </div>
+
+                                    @if($m->descricao)
+                                        <div class="text-xs text-slate-500">{{ $m->descricao }}</div>
+                                    @endif
+
+                                    <div class="mt-2">
+                                        @foreach($m->aulas->sortBy('ordem') as $a)
+                                            <a href="{{ route('aluno.curso.modulo.aula', [$curso->id, $m->id, $a->id]) }}"
+                                               class="flex items-center justify-between rounded border p-2 mb-1
+                                                      {{ !$modLiberado ? 'opacity-60 pointer-events-none' : '' }} hover:bg-slate-50">
+                                                <span class="truncate text-sm">{{ $a->titulo }}</span>
+                                                <span class="text-xs text-slate-500">{{ $a->duracao_minutos }}min</span>
+                                            </a>
+                                        @endforeach
+
+                                        {{-- Prova do módulo --}}
+                                        <div class="flex items-center justify-between mt-2">
+                                            @if($qz)
+                                                <a href="{{ route('aluno.quiz.show', [$curso->id, $qz->id]) }}"
+                                                   class="px-2 py-1 text-sm border rounded hover:bg-slate-50
+                                                          {{ !$modLiberado ? 'opacity-60 pointer-events-none' : '' }}">
+                                                    Prova do Módulo
+                                                </a>
+                                                @switch($status)
+                                                    @case('ok')
+                                                        <span class="text-[11px] px-2 py-1 rounded bg-green-100 text-green-700">OK</span>
+                                                        @break
+                                                    @case('reprov')
+                                                        <span class="text-[11px] px-2 py-1 rounded bg-red-100 text-red-700">Reprovado</span>
+                                                        @break
+                                                    @default
+                                                        <span class="text-[11px] px-2 py-1 rounded bg-slate-100 text-slate-600">Pend.</span>
+                                                @endswitch
+                                            @else
+                                                <span class="text-xs text-slate-500">Prova do módulo não cadastrada</span>
+                                            @endif
+                                        </div>
+
+                                        {{-- Aviso de bloqueio do próximo módulo --}}
+                                        @if(!$modLiberado)
+                                            <div class="mt-2 text-[11px] text-amber-700">
+                                                Para acessar este módulo, conclua e seja aprovado na prova do módulo anterior.
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
 
@@ -157,7 +251,7 @@
         </form>
     </div>
 
-    {{-- JS puro --}}
+    {{-- JS da navegação/estado do quiz --}}
     <script>
         (function(){
             const total = {{ $quiz->questoes->count() }};
@@ -172,7 +266,7 @@
             const lblAtual = document.getElementById('lblAtual');
             const barra = document.getElementById('barraProgresso');
             const lblResp = document.getElementById('respondidasLabel');
-            const lblPct  = document.getElementById('pctLabel'); // <— percentual
+            const pctLabel = document.getElementById('pctLabel');
 
             function setPillState(){
                 pills.forEach((p,i)=>{
@@ -186,10 +280,7 @@
             }
 
             function showPage(i){
-                questions.forEach((el, idx)=>{
-                    if(idx === i){ el.classList.add('active'); }
-                    else { el.classList.remove('active'); }
-                });
+                questions.forEach((el, idx)=> el.classList.toggle('active', idx===i));
                 page = i;
                 lblAtual.textContent = (page+1);
                 setPillState();
@@ -214,7 +305,7 @@
                 const count = answered.filter(Boolean).length;
                 const pct = Math.round((count/total)*100);
                 barra.style.width = pct+'%';
-                lblPct.textContent = pct+'%';        // <— atualiza “0%”
+                pctLabel.textContent = pct+'%';
                 lblResp.textContent = `${count} de ${total} respondidas`;
                 setPillState();
                 updateButtons();
@@ -224,7 +315,7 @@
             document.querySelectorAll('.answer-radio').forEach(r=>{
                 r.addEventListener('change', e=>{
                     const k = +e.target.dataset.q;
-                    if(!answered[k]) { answered[k] = true; updateProgress(); }
+                    if(!answered[k]){ answered[k] = true; updateProgress(); }
                 });
             });
 
@@ -232,7 +323,7 @@
                 t.addEventListener('input', e=>{
                     const k = +e.target.dataset.q;
                     const has = e.target.value.trim().length>0;
-                    if(has !== answered[k]) { answered[k] = has; updateProgress(); }
+                    if(has !== answered[k]){ answered[k] = has; updateProgress(); }
                 });
             });
 
@@ -242,9 +333,7 @@
             btnNext.addEventListener('click', ()=> { if(answered[page] && page<total-1) showPage(page+1); });
 
             // init
-            setPillState();
-            updateButtons();
-            updateProgress(); // inicia mostrando 0%
+            setPillState(); updateButtons(); updateProgress();
         })();
     </script>
 @endsection

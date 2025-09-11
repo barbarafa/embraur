@@ -124,7 +124,17 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
             ->name('quiz.refazer');
 
 
+        /**
+         * Carrinho/Checkout
+         */
+        Route::post('carrinho/add/{curso}', [CheckoutController::class, 'add'])->name('carrinho.add');
+        Route::post('carrinho/remove/{curso}', [CheckoutController::class, 'remove'])->name('carrinho.remove');
+        Route::get('carrinho', [CheckoutController::class, 'cart'])->name('carrinho');
 
+        Route::post('checkout', [CheckoutController::class, 'checkout'])->name('checkout');
+        Route::get('checkout/sucesso', [CheckoutController::class, 'success'])->name('checkout.sucesso');
+        Route::get('checkout/falha', [CheckoutController::class, 'failure'])->name('checkout.falha');
+        Route::get('checkout/pendente', [CheckoutController::class, 'pending'])->name('checkout.pendente');
     });
 });
 
