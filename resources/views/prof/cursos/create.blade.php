@@ -6,7 +6,7 @@
         <div class="card p-6">
             <h1 class="text-xl font-bold mb-4">Novo Curso</h1>
 
-            <form method="POST" action="{{ route('prof.cursos.store') }}" enctype="multipart/form-data">
+            <form id="cursoForm" method="POST" action="{{ route('prof.cursos.store') }}" enctype="multipart/form-data">
                 @csrf
                 @include('prof.cursos._form', ['mode' => 'create'])
             </form>

@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Cursos extends Model
 {
-    use HasFactory;
 
     protected $table = 'cursos';
     public $timestamps = false; // suas migrations não usam created_at/updated_at
+
+    protected $appends = ['imagem_capa_url'];
 
     protected $fillable = [
         'professor_id',
@@ -25,9 +27,8 @@ class Cursos extends Model
         'preco',
         'preco_original',
         'nota_minima_aprovacao',  // usado para travar/destravar módulos (>= 7.0)
-        'maximo_alunos',
-        'status_publicacao',      // ex.: 'rascunho','publicado','oculto'
-        'slug',
+        'status',      // ex.: 'rascunho','publicado','oculto'
+
     ];
 
     protected $casts = [
@@ -35,7 +36,6 @@ class Cursos extends Model
         'preco_original'         => 'decimal:2',
         'carga_horaria_total'    => 'integer',
         'nota_minima_aprovacao'  => 'float',
-        'maximo_alunos'          => 'integer',
     ];
 
     /* ----------------------------- RELACIONAMENTOS ----------------------------- */
@@ -101,7 +101,10 @@ class Cursos extends Model
 
     public function getImagemCapaUrlAttribute()
     {
-        return $this->imagem_capa ? asset('storage/' . $this->imagem_capa) : null;
+        if (!$this->imagem_capa) {
+            return  Storage::url('cursos/capas/image_placeholder.jpg');
+        }
+        return $this->imagem_capa ? Storage::url($this->imagem_capa) : null;
     }
 
     /* ------------------------- HELPERS/CONSULTAS ÚTEIS ------------------------ */

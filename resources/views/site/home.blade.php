@@ -51,8 +51,10 @@
             <div class="grid md:grid-cols-4 gap-4 mt-6">
                 @foreach ($populares as $curso)
                     <div class="card overflow-hidden">
-                        <div class="h-32 bg-slate-100 flex items-center justify-center">
-                            <i class="ri-image-2-line text-3xl text-slate-400"></i>
+                        <div class="h-32 bg-slate-100 overflow-hidden">
+                            <img src="{{ $curso->imagem_capa_url }}"
+                                 alt="Capa do curso {{ $curso->titulo }}"
+                                 class="w-full h-full object-cover">
                         </div>
                         <div class="p-4 space-y-2">
                             <div class="flex items-center justify-between text-xs">

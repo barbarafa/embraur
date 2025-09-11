@@ -38,13 +38,55 @@
             <a href="{{ route('portal.professor') }}" class="hidden sm:inline-flex btn btn-outline">Portal do Professor</a>
 
             @if(session('aluno_id'))
-                <form action="{{ route('aluno.logout') }}" method="post">@csrf
-                    <button class="btn-primary h-9 px-4 rounded-md">Sair</button>
+                <form id="logoutForm" action="{{ route('aluno.logout') }}" method="POST" class="hidden md:inline-flex">
+                    @csrf
+                    <button type="submit" class="btn-primary h-9 px-4 rounded-md">Sair</button>
                 </form>
             @endif
         </div>
     </div>
 </header>
+
+@if (session('success') || session('error') || session('info'))
+    <div class="container-page max-w-5xl mx-auto mt-4">
+        @if (session('success'))
+            <div class="mb-3 rounded-lg border border-green-200 bg-green-50 text-green-900 px-4 py-3">
+                {{ session('success') }}
+            </div>
+        @endif
+        @if (session('info'))
+            <div class="mb-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-900 px-4 py-3">
+                {{ session('info') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-3 rounded-lg border border-red-200 bg-red-50 text-red-900 px-4 py-3">
+                {{ session('error') }}
+            </div>
+        @endif
+    </div>
+@endif
+
+{{-- VALIDAÇÃO: lista de erros (mostra até 5) --}}
+@if ($errors->any())
+    @php
+        $all = $errors->all();                     // array de mensagens
+        $top = collect($all)->take(5);             // pega só as 5 primeiras
+    @endphp
+    <div class="container-page max-w-5xl mx-auto mt-2">
+        <div class="mb-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3">
+            <strong class="block mb-1">Corrija os campos abaixo:</strong>
+            <ul class="list-disc pl-5 space-y-0.5">
+                @foreach ($top as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+                @if (count($all) > 5)
+                    <li>… e mais {{ count($all) - 5 }} erro(s).</li>
+                @endif
+            </ul>
+        </div>
+    </div>
+@endif
 
 <main>@yield('content')</main>
 
@@ -84,3 +126,10 @@
 </footer>
 </body>
 </html>
+
+<script>
+    // some apenas o de sucesso após 4s
+    setTimeout(()=>{
+        document.querySelectorAll('[role="alert"].border-green-200')?.forEach(el => el.remove());
+    }, 4000);
+</script>

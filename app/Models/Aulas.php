@@ -18,5 +18,6 @@ class Aulas extends Model
 
     public function modulo(){ return $this->belongsTo(Modulos::class, 'modulo_id'); }
     public function materiais(){ return $this->hasMany(MaterialApoio::class, 'aula_id'); }
-    public function questoes(){ return $this->hasMany(Questao::class, 'aula_id'); }
+    public function questoes(){ return $this->hasMany(QuizQuestao::class, 'aula_id'); }
+
 }

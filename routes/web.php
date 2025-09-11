@@ -176,8 +176,15 @@ Route::prefix('prof')->name('prof.')->group(function () {
         Route::post('cursos/{curso}/modulos/{modulo}/aulas/{aula}/midia', [AulaAdminController::class, 'uploadMedia'])->name('cursos.modulos.aulas.media.upload');
         Route::delete('cursos/{curso}/modulos/{modulo}/aulas/{aula}/midia/{media}', [AulaAdminController::class, 'removeMedia'])->name('cursos.modulos.aulas.media.remove');
 
-        // Quiz do professor (CRUD) — usando alias para evitar conflito com AlunoQuizController
-        Route::resource('cursos.quizzes', ProfessorQuizController::class)->shallow();     // /prof/cursos/{curso}/quizzes
-        Route::resource('modulos.quizzes', ProfessorQuizController::class)->shallow();    // /prof/modulos/{modulo}/quizzes
+//        // Quiz do professor (CRUD) — usando alias para evitar conflito com AlunoQuizController
+//        Route::resource('cursos.quizzes', ProfessorQuizController::class)->shallow();     // /prof/cursos/{curso}/quizzes
+//        Route::resource('modulos.quizzes', ProfessorQuizController::class)->shallow();    // /prof/modulos/{modulo}/quizzes
+
+
+        Route::get('quizzes',             [ProfessorQuizController::class, 'index'])->name('quizzes.index');
+        Route::get('quizzes/create',      [ProfessorQuizController::class, 'create'])->name('quizzes.create');
+        Route::post('quizzes',            [ProfessorQuizController::class, 'store'])->name('quizzes.store');
+        Route::get('quizzes/{quiz}/edit', [ProfessorQuizController::class, 'edit'])->name('quizzes.edit');
+        Route::put('quizzes/{quiz}',      [ProfessorQuizController::class, 'update'])->name('quizzes.update');
     });
 });

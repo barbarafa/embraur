@@ -6,6 +6,11 @@
         <div class="grid md:grid-cols-3 gap-6">
 
             <div class="md:col-span-2 card p-6">
+                <div class="h-32 bg-slate-100 overflow-hidden">
+                    <img src="{{ $curso->imagem_capa_url }}"
+                         alt="Capa do curso {{ $curso->titulo }}"
+                         class="w-full h-full object-cover">
+                </div>
                 <h1 class="text-2xl font-bold mb-2">{{ $curso->titulo }}</h1>
                 <div class="text-sm text-slate-500 mb-4">
                     <span class="badge border-blue-200 text-blue-700 bg-blue-50">{{ $curso->categoria->nome }}</span>

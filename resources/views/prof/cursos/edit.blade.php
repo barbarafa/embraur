@@ -6,7 +6,7 @@
         <div class="card p-6">
             <h1 class="text-xl font-bold mb-4">Editar Curso</h1>
 
-            <form method="POST" action="{{ route('prof.cursos.update', $curso->id) }}" enctype="multipart/form-data">
+            <form id="cursoForm" method="POST" action="{{ route('prof.cursos.update', $curso->id) }}" enctype="multipart/form-data">
                 @csrf
                 @method('PUT') {{-- ou PATCH --}}
                 @include('prof.cursos._form', ['mode' => 'edit'])
