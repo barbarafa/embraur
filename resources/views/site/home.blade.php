@@ -4,6 +4,7 @@
 
 @section('content')
     {{-- Hero --}}
+
     <section class="bg-[url('https://images.unsplash.com/photo-1554200876-56c2f25224fa?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center">
         <div class="bg-blue-900/80">
             <div class="mx-auto container-page px-4 py-20 text-white">
@@ -95,4 +96,90 @@
             </div>
         </div>
     </section>
+
+
+    @php
+        $miniCart = collect(session('cart', []));
+        $miniTotal = $miniCart->sum('preco');
+    @endphp
+
+    {{-- MINI-CARRINHO: botão flutuante + painel --}}
+    <button id="miniCartToggle"
+            class="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 px-3 py-2 rounded-full shadow border bg-white hover:bg-slate-50">
+        <span>🛒</span>
+        <span>Carrinho</span>
+        <span data-cart-badge
+              class="min-w-[20px] h-5 px-1 rounded-full bg-blue-600 text-white text-[11px] grid place-items-center {{ $miniCart->isEmpty() ? 'hidden' : '' }}">
+    {{ $miniCart->count() }}
+  </span>
+    </button>
+
+    <div id="miniCartPanel"
+         class="fixed bottom-20 right-5 z-40 w-[320px] max-h-[70vh] overflow-auto rounded-xl border bg-white shadow-lg hidden">
+        <div class="p-4 border-b flex items-center justify-between">
+            <div class="font-semibold">Seu carrinho</div>
+            <button class="text-slate-500 hover:text-slate-700" onclick="document.getElementById('miniCartPanel').classList.add('hidden')">✕</button>
+        </div>
+
+        <div class="p-3">
+            @if($miniCart->isEmpty())
+                <div class="text-sm text-slate-500 p-3">Seu carrinho está vazio.</div>
+            @else
+                <ul class="space-y-2">
+                    @foreach($miniCart as $it)
+                        <li class="flex items-center justify-between rounded border p-2">
+                            <div class="pr-2">
+                                <div class="text-sm font-medium truncate max-w-[180px]">{{ $it['titulo'] }}</div>
+                                <div class="text-xs text-slate-500">R$ {{ number_format($it['preco'] ?? 0,2,',','.') }}</div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <form method="post" action="{{ route('checkout.cart.remove', $it['id']) }}">
+                                    @csrf
+                                    <button class="text-xs text-red-600 hover:underline">remover</button>
+                                </form>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+
+                <div class="mt-3 border-t pt-3 flex items-center justify-between">
+                    <span class="text-sm text-slate-600">Total</span>
+                    <span class="font-semibold">R$ {{ number_format($miniTotal,2,',','.') }}</span>
+                </div>
+
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                    <a href="{{ route('checkout.cart') }}" class="btn btn-outline text-center">Ver carrinho</a>
+                    <a href="{{ route('checkout.cart') }}" class="btn btn-primary text-center">Finalizar</a>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            const btn = document.getElementById('miniCartToggle');
+            const panel = document.getElementById('miniCartPanel');
+            btn?.addEventListener('click', ()=> panel.classList.toggle('hidden'));
+
+            // Atualização do BADGE em tempo real (reaproveita o endpoint JSON existente)
+            async function refreshCartBadge() {
+                try {
+                    const res = await fetch("{{ route('checkout.cart.count') }}", { headers: {'Accept':'application/json'}, cache: 'no-store' });
+                    const data = await res.json();
+                    const n = Number(data?.count || 0);
+                    document.querySelectorAll('[data-cart-badge]').forEach(b=>{
+                        b.textContent = String(n);
+                        b.classList.toggle('hidden', n === 0);
+                    });
+                } catch(e){}
+            }
+            // chama ao carregar a página
+            refreshCartBadge();
+
+            // (opcional) revalida a cada 15s
+            // setInterval(refreshCartBadge, 15000);
+        })();
+    </script>
+
 @endsection

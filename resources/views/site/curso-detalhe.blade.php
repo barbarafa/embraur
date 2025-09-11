@@ -2,46 +2,227 @@
 @section('title', $curso->titulo)
 
 @section('content')
-    <section class="mx-auto container-page px-4 py-10">
-        <div class="grid md:grid-cols-3 gap-6">
+    <section class="mx-auto container-page px-4 py-8">
 
-            <div class="md:col-span-2 card p-6">
-                <div class="h-32 bg-slate-100 overflow-hidden">
-                    <img src="{{ $curso->imagem_capa_url }}"
-                         alt="Capa do curso {{ $curso->titulo }}"
-                         class="w-full h-full object-cover">
+
+        {{-- Cabeçalho com breadcrumb simplificado --}}
+        <div class="flex items-center justify-between mb-3">
+            <nav class="text-sm text-slate-500">
+                <a href="{{ route('site.cursos') }}" class="hover:underline">Cursos</a>
+                <span class="mx-1">/</span>
+                <span>{{ $curso->titulo }}</span>
+            </nav>
+
+            {{-- Carrinho (link + badge) --}}
+            <a href="{{ route('checkout.cart') }}" class="relative inline-flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border hover:bg-slate-50">
+                <span>🛒</span>
+                <span>Carrinho</span>
+                <span
+                    data-cart-badge
+                    class="absolute -top-2 -right-2 hidden min-w-[20px] h-5 px-1 rounded-full bg-blue-600 text-white text-[11px] grid place-items-center"
+                >0</span>
+            </a>
+        </div>
+
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {{-- Coluna esquerda (mídia + tabs + módulos) --}}
+            <div class="lg:col-span-8 space-y-4">
+                {{-- Capa/Player --}}
+                <div class="rounded-lg border bg-black aspect-video overflow-hidden">
+                    @if($curso->video_introducao)
+                        <iframe class="w-full h-full" src="{{ $curso->video_introducao }}" allowfullscreen></iframe>
+                    @else
+                        <img src="{{ $curso->imagem_capa_url }}" class="w-full h-full object-cover opacity-70" alt="Capa do curso">
+                    @endif
                 </div>
-                <h1 class="text-2xl font-bold mb-2">{{ $curso->titulo }}</h1>
-                <div class="text-sm text-slate-500 mb-4">
-                    <span class="badge border-blue-200 text-blue-700 bg-blue-50">{{ $curso->categoria->nome }}</span>
-                    <span class="badge border-slate-200 text-slate-600 bg-slate-50 ml-2">{{ $curso->nivel }}</span>
+
+                {{-- Tabs simples (Conteúdo / Sobre / Instrutor / Avaliações) --}}
+                <div class="rounded-lg border bg-white">
+                    <div class="flex text-sm">
+                        <button class="px-4 py-2 border-b-2 border-blue-600 text-blue-700 font-medium">Conteúdo</button>
+{{--                        <button class="px-4 py-2 text-slate-500">Sobre</button>--}}
+{{--                        <button class="px-4 py-2 text-slate-500">Instrutor</button>--}}
+{{--                        <button class="px-4 py-2 text-slate-500">Avaliações</button>--}}
+                    </div>
+
+                    {{-- Módulos/Aulas --}}
+                    <div class="p-4">
+                        <h3 class="font-semibold mb-2">Módulos do Curso</h3>
+
+                        <div class="space-y-3">
+                            @forelse($curso->modulos->sortBy('ordem') as $m)
+                                <div class="rounded-lg border">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <div>
+                                            <div class="font-medium">Módulo {{ $loop->iteration }}: {{ $m->titulo }}</div>
+                                            @if($m->descricao)
+                                                <div class="text-xs text-slate-500">{{ $m->descricao }}</div>
+                                            @endif
+                                        </div>
+                                        <button class="text-slate-500 text-sm">
+                                            <span class="hidden md:inline">Ver aulas</span> ⌄
+                                        </button>
+                                    </div>
+
+                                    @if($m->aulas->count())
+                                        <div class="px-4 pb-3">
+                                            @foreach($m->aulas->sortBy('ordem') as $a)
+                                                <div class="flex items-center justify-between rounded border p-3 mb-2 bg-white">
+                                                    <div class="truncate">
+                                                        <div class="text-sm">{{ $a->titulo }}</div>
+                                                        @if($a->descricao)
+                                                            <div class="text-xs text-slate-500 truncate">{{ $a->descricao }}</div>
+                                                        @endif
+                                                    </div>
+                                                    <div class="text-xs text-slate-500">{{ $a->duracao_minutos }} min</div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            @empty
+                                <div class="text-sm text-slate-500">Este curso ainda não possui módulos.</div>
+                            @endforelse
+                        </div>
+                    </div>
                 </div>
-                <p class="text-slate-700">{{ $curso->descricao }}</p>
             </div>
 
-            <aside class="card p-6">
-                @php
-                    // Use o guard se existir; senão, mantém a verificação por sessão.
-                    $alunoAutenticado = auth('aluno')->check() || session()->has('aluno_id');
-                @endphp
+            {{-- Coluna direita (card de compra) --}}
+            <aside class="lg:col-span-4">
+                <div class="rounded-lg border p-4 bg-white">
+                    @php
+                        $temPromo = filled($curso->preco_original) && (float)$curso->preco_original > (float)$curso->preco;
+                    @endphp
 
-                @if($alunoAutenticado)
-                    {{-- ALUNO LOGADO -> faz a matrícula (POST protegido) --}}
-                    <form class="mt-4" method="post" action="{{ route('aluno.matricular', $curso) }}">
-                        @csrf
-                        <button class="btn btn-primary w-full">Matricular-se</button>
-                    </form>
-                @else
-                    {{-- NÃO LOGADO -> enviar para REGISTER, preservando retorno/intended e o curso --}}
-                    <a
-                        class="btn btn-primary w-full mt-4"
-                        href="{{ route('aluno.register') }}?intended={{ urlencode(request()->fullUrl()) }}&curso={{ $curso->id }}"
-                    >
-                        Matricular-se
-                    </a>
-                @endif
+                    <div class="space-y-2">
+                        @if($temPromo)
+                            <div class="text-slate-400 text-sm line-through">
+                                R$ {{ number_format($curso->preco_original,2,',','.') }}
+                            </div>
+                        @endif
+                        <div class="text-2xl font-bold">
+                            R$ {{ number_format($curso->preco ?? 0, 2, ',', '.') }}
+                        </div>
+                        <div class="text-xs text-slate-500">Acesso vitalício</div>
+                    </div>
+
+                    <div class="mt-4 space-y-2">
+                        @php
+                            $alunoLogado = auth('aluno')->check() || session()->has('aluno_id');
+                        @endphp
+
+                        @if($alunoLogado)
+                            {{-- Já logado → manda direto pro checkout --}}
+                            <a href="{{ route('checkout.start', $curso->id) }}" class="btn btn-primary w-full">Comprar agora</a>
+
+                        @else
+                            {{-- Não logado → vai para cadastro com intended + curso --}}
+                            <a
+                                href="{{ route('aluno.register') }}?intended={{ urlencode(route('checkout.start', $curso->id)) }}&curso={{ $curso->id }}"
+                                class="btn btn-primary w-full"
+                            >
+                                Comprar agora
+                            </a>
+                        @endif
+
+                        <form id="addToCartForm" method="post" action="{{ route('checkout.cart.add', $curso->id) }}" class="mt-2">
+                            @csrf
+                            <button class="btn btn-soft w-full">Adicionar ao Carrinho</button>
+                        </form>
+                    </div>
+
+                    <div class="mt-4 space-y-2 text-sm">
+                        <div class="flex items-center gap-2"><span>✅</span> Certificado digital reconhecido</div>
+                        <div class="flex items-center gap-2"><span>✅</span> Acesso vitalício ao conteúdo</div>
+                        <div class="flex items-center gap-2"><span>✅</span> Material complementar em PDF</div>
+                        <div class="flex items-center gap-2"><span>✅</span> Suporte especializado</div>
+                        <div class="flex items-center gap-2"><span>✅</span> Garantia de 7 dias</div>
+                    </div>
+                </div>
             </aside>
-
         </div>
     </section>
 @endsection
+
+<script>
+    (function () {
+        const countUrl = "{{ route('checkout.cart.count') }}";
+        const addUrl   = "{{ route('checkout.cart.add', $curso->id) }}";
+        const token    = "{{ csrf_token() }}";
+
+        function setBadges(count) {
+            document.querySelectorAll('[data-cart-badge]').forEach(badge => {
+                const n = Number(count) || 0;
+                badge.textContent = String(n);
+                // mostra badge somente se > 0
+                if (n > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden');
+            });
+        }
+
+        async function refreshBadge() {
+            try {
+                const res = await fetch(countUrl, {
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store' // evita pegar do cache
+                });
+                const data = await res.json();
+                setBadges(data?.count ?? 0);
+            } catch (e) { /* silencia */ }
+        }
+
+        const form = document.getElementById('addToCartForm');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    const res = await fetch(addUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token
+                        },
+                        cache: 'no-store'
+                    });
+
+                    // Se o backend redirecionar (não retornou JSON), force um refresh do badge e dá feedback
+                    const contentType = res.headers.get('content-type') || '';
+                    if (!contentType.includes('application/json')) {
+                        await refreshBadge();
+                        toast('Curso adicionado ao carrinho.');
+                        return;
+                    }
+
+                    const data = await res.json();
+                    if (data?.ok) {
+                        setBadges(data.count ?? 0);
+                        toast(data.msg || 'Curso adicionado ao carrinho.');
+                    } else {
+                        throw new Error('Resposta inválida');
+                    }
+                } catch (err) {
+                    toast('Falha ao adicionar. Tente novamente.', true);
+                }
+            });
+        }
+
+        function toast(text, isError = false) {
+            const el = document.createElement('div');
+            el.textContent = text;
+            el.className =
+                'fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-2 rounded text-white text-sm shadow ' +
+                (isError ? 'bg-red-600' : 'bg-green-600');
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1800);
+        }
+
+        // Atualiza ao carregar a tela
+        refreshBadge();
+
+        // (Opcional) revalidar periodicamente
+        // setInterval(refreshBadge, 15000);
+    })();
+</script>
+
+
