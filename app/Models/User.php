@@ -48,11 +48,11 @@ class User extends Model implements Authenticatable
     public function perfilAluno()     { return $this->hasOne(PerfilAluno::class, 'usuario_id'); }
     public function perfilProfessor() { return $this->hasOne(PerfilProfessor::class, 'usuario_id'); }
 
-    // Cursos (como professor)
+    // Cursos.php (como professor)
     public function cursosMinistrados(){ return $this->hasMany(Cursos::class, 'professor_id'); }
 
     // Matrículas (como aluno)
-    public function matriculas()      { return $this->hasMany(Matricula::class, 'aluno_id'); }
+    public function matriculas()      { return $this->hasMany(Matriculas::class, 'aluno_id'); }
 
     public function cursos()
     {

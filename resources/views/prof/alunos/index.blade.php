@@ -4,75 +4,85 @@
 @section('content')
     <div class="container-page py-6">
 
-        <div class="flex items-center justify-between mb-4">
+        {{-- HEADER --}}
+        <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-semibold">Gerenciar Alunos</h1>
                 <p class="text-slate-600 text-sm">Visualize o progresso e gerencie seus alunos</p>
             </div>
+
+            <div class="flex items-center gap-2">
+                <a href="{{ route('prof.cursos.create') }}"
+                   class="btn-primary rounded-md h-10 px-4 flex items-center gap-2">
+                    <span class="text-lg">+</span> Criar Curso
+                </a>
+                <button class="h-10 w-10 grid place-items-center rounded-md border hover:bg-gray-50">⚙️</button>
+            </div>
         </div>
 
-        {{-- Abas iguais às demais telas --}}
-        <div class="rounded-xl border bg-white p-1 shadow-sm flex items-center gap-2 text-sm overflow-x-auto mb-4">
-            <a href="{{ route('prof.dashboard') }}"
-               class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Visão Geral</a>
+        {{-- TABS --}}
+        @include('prof._tabs', ['active' => 'alunos'])
 
-            <a href="{{ route('prof.cursos.index') }}"
-               class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Meus Cursos</a>
+        {{-- CARD: Gerenciar Alunos --}}
+        <div class="rounded-xl border bg-white p-4 shadow-sm mt-4">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h3 class="text-lg font-semibold">Gerenciar Alunos</h3>
+                    <p class="text-xs text-slate-500">Visualize o progresso e gerencie seus alunos</p>
+                </div>
 
-            <button class="px-4 py-2 rounded-lg bg-gray-100 font-semibold">Alunos</button>
-
-            <a href="{{ route('prof.duvidas.index') }}"
-               class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Dúvidas</a>
-
-            <a href="#"
-               class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">Relatórios</a>
-        </div>
-
-        {{-- Busca / filtros --}}
-        <form method="GET" class="bg-white border rounded-xl p-3 shadow-sm mb-4 flex items-center gap-3">
-            <div class="relative w-full md:w-96">
-                <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Buscar alunos..."
-                       class="w-full h-10 rounded-md border-slate-300 pl-10 pr-3">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+                <button type="button"
+                        class="inline-flex items-center gap-2 h-9 px-3 rounded-md border text-sm hover:bg-gray-50">
+                    Filtrar
+                </button>
             </div>
-            <button class="h-10 px-4 rounded-md border text-slate-700 hover:bg-gray-50">Filtrar</button>
-        </form>
 
-        @if($alunos->isEmpty())
-            <div class="rounded-2xl border bg-white shadow-sm p-10 text-center">
-                <div class="mx-auto w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-2xl">👥</div>
-                <h3 class="text-lg font-semibold mt-4">Nenhum aluno encontrado</h3>
-                <p class="text-slate-500 mt-1">Aparecerão aqui os alunos matriculados nos seus cursos.</p>
-            </div>
-        @else
-            <div class="rounded-xl border bg-white p-0 shadow-sm overflow-hidden">
-                @foreach($alunos as $a)
-                    <div class="flex items-center gap-3 px-4 py-3 border-b last:border-0">
-                        <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-sm">👤</div>
+            {{-- Busca --}}
+            <form method="get" action="{{ route('prof.alunos.index') }}" class="mb-4">
+                <div class="relative">
+                    <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Buscar alunos..."
+                           class="w-full h-10 pl-10 pr-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30"/>
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+                </div>
+            </form>
 
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium truncate">{{ $a['nome'] }}</div>
-                            <div class="text-xs text-slate-500">{{ $a['curso'] }}</div>
-
-                            <div class="mt-2 w-full bg-gray-100 h-2 rounded">
-                                <div class="bg-blue-600 h-2 rounded" style="width: {{ (int) $a['percent'] }}%"></div>
+            {{-- LISTA --}}
+            @if(($alunos ?? collect())->isEmpty())
+                <div class="text-center py-12 text-slate-500">Nenhum aluno encontrado.</div>
+            @else
+                <div class="space-y-3">
+                    @foreach($alunos as $aluno)
+                        @php
+                            $percent = max(0, min(100, (int)($aluno['percent'] ?? 0)));
+                            $quando  = $aluno['quando'] ?? '—';
+                        @endphp
+                        <div class="rounded-lg border p-3 flex items-center gap-4">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="h-10 w-10 rounded-full grid place-items-center bg-gray-100 text-slate-400">👤</div>
+                                <div class="min-w-0">
+                                    <div class="font-medium truncate">{{ $aluno['nome'] }}</div>
+                                    <div class="text-xs text-slate-500 truncate">{{ $aluno['curso'] }}</div>
+                                </div>
                             </div>
-                            <div class="text-xs text-slate-500 mt-1">
-                                {{ (int)$a['percent'] }}% concluído • {{ $a['quando'] }}
+                            <div class="ml-auto w-full sm:w-2/5 md:w-1/3">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-slate-600">{{ $percent }}% concluído</span>
+                                    <span class="text-slate-400">{{ $quando }}</span>
+                                </div>
+                                <div class="mt-1 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                                    <div class="h-2 rounded-full bg-blue-600" style="width: {{ $percent }}%"></div>
+                                </div>
                             </div>
+                            {{--
+                            <div class="shrink-0">
+                                <a href="#" class="ml-2 h-9 px-3 rounded-md border text-sm hover:bg-gray-50 whitespace-nowrap">Ver Detalhes</a>
+                            </div>
+                            --}}
                         </div>
-
-                        <a href="#"
-                           class="ml-2 h-8 px-3 rounded-md border text-sm hover:bg-gray-50 whitespace-nowrap">
-                            Ver Detalhes
-                        </a>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="mt-6">
-                {{ $matriculas->links() }}
-            </div>
-        @endif
+                    @endforeach
+                </div>
+                <div class="mt-6">{{ $matriculas->appends(['q' => $q ?? null])->links() }}</div>
+            @endif
+        </div>
     </div>
 @endsection

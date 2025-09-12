@@ -8,7 +8,7 @@ use App\Models\{
     QuizQuestao,
     QuizTentativa,
     QuizResposta,
-    Matricula,
+    Matriculas,
     Cursos
 };
 use Illuminate\Http\Request;
@@ -25,7 +25,7 @@ class AlunoQuizController extends Controller
         $alunoId = auth('aluno')->id() ?? $rq->session()->get('aluno_id');
         abort_if(!$alunoId, 403);
 
-        $matricula = Matricula::where('aluno_id',$alunoId)
+        $matricula = Matriculas::where('aluno_id',$alunoId)
             ->where('curso_id',$curso->id)->firstOrFail();
 
         $quiz->load('questoes.opcoes');
@@ -47,7 +47,7 @@ class AlunoQuizController extends Controller
         abort_if(!$alunoId, 403);
 
         // Confere matrícula
-        $matricula = Matricula::where('aluno_id', $alunoId)
+        $matricula = Matriculas::where('aluno_id', $alunoId)
             ->where('curso_id', $curso->id)
             ->firstOrFail();
 

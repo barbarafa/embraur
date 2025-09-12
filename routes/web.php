@@ -101,6 +101,7 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
             ->name('quiz.refazer');
 
 
+
         /**
          * Carrinho/Checkout
          */
@@ -146,7 +147,7 @@ Route::prefix('prof')->name('prof.')->group(function () {
         // Alunos
         Route::get('alunos', [ProfessorAlunoController::class, 'index'])->name('alunos.index');
 
-        // Cursos (CRUD)
+        // Cursos.php (CRUD)
         Route::get('cursos', [CursoAdminController::class, 'index'])->name('cursos.index');
         Route::get('cursos/criar', [CursoAdminController::class, 'create'])->name('cursos.create');
         Route::post('cursos', [CursoAdminController::class, 'store'])->name('cursos.store');

@@ -19,7 +19,7 @@ class SstSeed extends Seeder
         try {
             // 1) Categorias
             $categorias = [
-                ['nome' => 'Normas Regulamentadoras (NRs)', 'descricao' => 'Cursos focados nas NRs aplicáveis à SST', 'icone' => 'ph:book', 'ordem_exibicao' => 1],
+                ['nome' => 'Normas Regulamentadoras (NRs)', 'descricao' => 'Cursos.php focados nas NRs aplicáveis à SST', 'icone' => 'ph:book', 'ordem_exibicao' => 1],
                 ['nome' => 'Prevenção de Acidentes',         'descricao' => 'Técnicas e práticas para reduzir incidentes', 'icone' => 'ph:shield-check', 'ordem_exibicao' => 2],
                 ['nome' => 'Brigada de Incêndio',            'descricao' => 'Formação e reciclagem de brigadistas', 'icone' => 'ph:fire', 'ordem_exibicao' => 3],
                 ['nome' => 'Saúde Ocupacional',              'descricao' => 'Higiene, agentes nocivos e programas de saúde', 'icone' => 'ph:heartbeat', 'ordem_exibicao' => 4],
@@ -37,7 +37,7 @@ class SstSeed extends Seeder
                 $categoriasIds[$cat['nome']] = $c->id;
             }
 
-            // 2) Cursos (com módulos e aulas)
+            // 2) Cursos.php (com módulos e aulas)
             // Observação: ajuste professor_id conforme sua base.
             $professorIdDefault = 1;
 

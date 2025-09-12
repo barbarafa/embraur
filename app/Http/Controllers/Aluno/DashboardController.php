@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Aluno;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Matricula;
+use App\Models\Matriculas;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -21,7 +21,7 @@ class DashboardController extends Controller
         $aluno = User::where('tipo_usuario', 'aluno')->where('id', $alunoId)->first();
 
         // 3) Minhas matrículas + curso/categoria (ordem: mais recente primeiro)
-        $matriculas = Matricula::with([
+        $matriculas = Matriculas::with([
             'curso:id,titulo,imagem_capa,carga_horaria_total,nota_minima_aprovacao,categoria_id',
             'curso.categoria:id,nome'
         ])
@@ -51,7 +51,7 @@ class DashboardController extends Controller
 
             return [
                 'titulo'  => $curso->titulo ?? 'Curso',
-                'thumb'   => $curso?->imagem_capa_url,   // usa accessor do model Cursos
+                'thumb'   => $curso?->imagem_capa_url,   // usa accessor do model Cursos.php
                 'percent' => $percent,
                 // 👉 leva direto para a tela que criamos
                 'link'    => $curso ? route('aluno.curso.conteudo', $curso->id) : route('aluno.cursos'),

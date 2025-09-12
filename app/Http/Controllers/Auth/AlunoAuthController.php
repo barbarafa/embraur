@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cursos;
-use App\Models\Matricula;
+use App\Models\Matriculas;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -90,13 +90,13 @@ class AlunoAuthController extends Controller
                 $curso = Cursos::find($cursoId);
                 if (!$curso) return;
 
-                $jaTem = Matricula::where('aluno_id', $aluno->id)
+                $jaTem = Matriculas::where('aluno_id', $aluno->id)
                     ->where('curso_id', $cursoId)
                     ->exists();
                 if ($jaTem) return;
 
                 $agora = Carbon::now();
-                Matricula::create([
+                Matriculas::create([
                     'aluno_id' => $aluno->id,
                     'curso_id' => $cursoId,
                     'data_matricula' => $agora,

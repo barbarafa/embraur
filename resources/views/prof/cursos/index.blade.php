@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title','Meus Cursos')
+@section('title','Meus Cursos.php')
 
 @section('content')
     <div class="container-page py-6">
@@ -17,33 +17,7 @@
             </a>
         </div>
 
-        {{-- Abas iguais às do dashboard --}}
-        <div class="rounded-xl border bg-white p-1 shadow-sm flex items-center gap-2 text-sm overflow-x-auto mb-4">
-            <a href="{{ route('prof.dashboard') }}"
-               class="px-4 py-2 rounded-lg {{ request()->routeIs('prof.dashboard') ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                Visão Geral
-            </a>
-
-            <a href="{{ route('prof.cursos.index') }}"
-               class="px-4 py-2 rounded-lg {{ request()->routeIs('prof.cursos.*') ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
-                Meus Cursos
-            </a>
-
-            <a href="#"
-               class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">
-                Alunos
-            </a>
-
-{{--            <a href="{{ route('prof.duvidas.index') }}"--}}
-{{--               class="px-4 py-2 rounded-lg {{ request()->routeIs('prof.duvidas.*') ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">--}}
-{{--                Dúvidas--}}
-{{--            </a>--}}
-
-            <a href="#"
-               class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">
-                Relatórios
-            </a>
-        </div>
+        @include('prof._tabs')
 
         {{-- Barra de ferramentas --}}
         <div class="bg-white border rounded-xl p-3 shadow-sm mb-4 flex items-center gap-3">
