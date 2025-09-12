@@ -79,7 +79,7 @@
                                         <span class="w-3 h-3 rounded-full bg-green-500 inline-block"></span> Respondida
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> Atual
+                                        <span class="w-3 h-3 rounded-full bg-green-600 inline-block"></span> Atual
                                     </div>
                                 </div>
                             </div>

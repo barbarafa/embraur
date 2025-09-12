@@ -28,7 +28,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <a href="{{ $c['link'] }}" class="px-3 py-2 rounded-md bg-blue-600 text-white text-xs hover:bg-blue-700">
+                            <a href="{{ $c['link'] }}" class="px-3 py-2 rounded-md bg-green-600 text-white text-xs hover:bg-green-700">
                                 Continuar
                             </a>
                         </div>

@@ -77,7 +77,7 @@
                             <div class="mt-4">
                                 @if($proximoModulo)
                                     <a href="{{ route('aluno.curso.modulo', [$curso->id, $proximoModulo->id]) }}"
-                                       class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                                       class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
                                         Continuar curso
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M13.172 12l-4.95-4.95 1.414-1.414L16 12l-6.364 6.364-1.414-1.414z"/>
@@ -85,7 +85,7 @@
                                     </a>
                                 @else
                                     <a href="{{ route('aluno.curso.conteudo', $curso->id) }}"
-                                       class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                                       class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
                                         Voltar ao curso
                                     </a>
                                 @endif
@@ -169,7 +169,7 @@
                             <p class="text-slate-700 font-medium mb-2">
                                 {{ $m->titulo }}
                                 @if($isAtualModulo)
-                                    <span class="ml-2 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">Atual</span>
+                                    <span class="ml-2 text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Atual</span>
                                 @endif
                             </p>
 
