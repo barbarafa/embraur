@@ -50,7 +50,7 @@
 @if (session('success') || session('error') || session('info'))
     <div class="container-page max-w-5xl mx-auto mt-4">
         @if (session('success'))
-            <div class="mb-3 rounded-lg border border-green-200 bg-green-50 text-green-900 px-4 py-3">
+            <div class="mb-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-900 px-4 py-3">
                 {{ session('success') }}
             </div>
         @endif
@@ -130,6 +130,6 @@
 <script>
     // some apenas o de sucesso após 4s
     setTimeout(()=>{
-        document.querySelectorAll('[role="alert"].border-green-200')?.forEach(el => el.remove());
+        document.querySelectorAll('[role="alert"].border-blue-200')?.forEach(el => el.remove());
     }, 4000);
 </script>
