@@ -14,7 +14,7 @@
                         <div class="text-xs text-gray-500 mb-3">Emitido em {{ \Illuminate\Support\Carbon::parse($cert['emitido_em'])->format('d/m/Y') }}</div>
                         <div class="flex gap-2">
                             <a href="{{ $cert['visualizar'] }}" class="px-3 py-2 rounded-md border text-sm hover:bg-gray-50">Visualizar</a>
-                            <a href="{{ $cert['download'] }}" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">Download</a>
+                            <a href="{{ $cert['download'] }}" class="px-3 py-2 rounded-md bg-green-600 text-white text-sm hover:bg-green-700">Download</a>
                         </div>
                     </div>
                 @empty

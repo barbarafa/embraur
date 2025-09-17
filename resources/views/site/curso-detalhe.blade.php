@@ -227,7 +227,7 @@
             el.textContent = text;
             el.className =
                 'fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-2 rounded text-white text-sm shadow ' +
-                (isError ? 'bg-red-600' : 'bg-green-600');
+                (isError ? 'bg-red-600' : 'bg-blue-600');
             document.body.appendChild(el);
             setTimeout(() => el.remove(), 1800);
         }

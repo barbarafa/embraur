@@ -100,15 +100,15 @@
 
                             @if($nextAula)
                                 <a href="{{ route('aluno.curso.modulo.aula', [$curso->id, $modulo->id, $nextAula->id]) }}"
-                                   class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Próxima &rarr;</a>
+                                   class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">Próxima &rarr;</a>
                             @else
                                 @if($modulo->quiz)
                                     <a href="{{ route('aluno.quiz.show', [$curso->id, $modulo->quiz->id]) }}"
-                                       class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                       class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">
                                         Ir para a Prova do Módulo &rarr;
                                     </a>
                                 @else
-                                    <button class="px-3 py-2 bg-blue-600 text-white rounded opacity-50" disabled>Fim do Módulo</button>
+                                    <button class="px-3 py-2 bg-green-600 text-white rounded opacity-50" disabled>Fim do Módulo</button>
                                 @endif
                             @endif
                         </div>
@@ -169,7 +169,7 @@
                                 @if(!$modLiberado)
                                     <span class="text-[11px] text-amber-700">Bloqueado</span>
                                 @elseif($isAtual)
-                                    <span class="text-[11px] text-blue-600">Atual</span>
+                                    <span class="text-[11px] text-green-600">Atual</span>
                                 @endif
                             </div>
                             @if($m->descricao)
@@ -179,7 +179,7 @@
                             <div class="mt-2">
                                 @foreach($m->aulas->sortBy('ordem') as $a)
                                     <a href="{{ route('aluno.curso.modulo.aula', [$curso->id, $m->id, $a->id]) }}"
-                                       class="flex items-center justify-between rounded border p-2 mb-1 {{ !$modLiberado ? 'opacity-60 pointer-events-none' : '' }} {{ (int)$a->id === (int)$aula->id ? 'bg-blue-50 border-blue-200' : 'hover:bg-slate-50' }}">
+                                       class="flex items-center justify-between rounded border p-2 mb-1 {{ !$modLiberado ? 'opacity-60 pointer-events-none' : '' }} {{ (int)$a->id === (int)$aula->id ? 'bg-green-50 border-green-200' : 'hover:bg-slate-50' }}">
                                         <span class="truncate text-sm">{{ $a->titulo }}</span>
                                         <span class="text-xs text-slate-500">{{ $a->duracao_minutos }}min</span>
                                     </a>
