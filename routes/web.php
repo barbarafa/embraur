@@ -2,180 +2,204 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\{
-    CursoController, ModalidadeController, ModuloController, AulaController,
-    PedidoController, PagamentoController, MatriculaController,
-    ProvaController, QuestaoController, CertificadoController,
-    MensagemSuporteController
-};
+// Site (público)
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\CursoController;
 
+// ===== ALUNO
 use App\Http\Controllers\Auth\AlunoAuthController;
-use App\Http\Controllers\Auth\ProfessorAuthController;
-// opcionais (se existirem)
-use App\Http\Controllers\Auth\AlunoPasswordController;
-use App\Http\Controllers\Auth\AlunoRegisterController;
+use App\Http\Controllers\Aluno\DashboardController;
+use App\Http\Controllers\Aluno\MatriculaController;
+use App\Http\Controllers\Aluno\StudentCoursesController;
+use App\Http\Controllers\Aluno\StudentCertificatesController;
+use App\Http\Controllers\Aluno\StudentPaymentsController;
+use App\Http\Controllers\Aluno\StudentProfileController;
+use App\Http\Controllers\Aluno\CursoConteudoController;
+use App\Http\Controllers\Aluno\AlunoQuizController;
+use App\Http\Controllers\AulaProgressoController;
+use App\Http\Controllers\CheckoutController;
+
+// ===== PROFESSOR
+
+use App\Http\Controllers\Professor\ProfessorDashboardController;
+use App\Http\Controllers\Professor\CursoAdminController;
+use App\Http\Controllers\Professor\CursoMediaController;
+use App\Http\Controllers\Professor\ModuloAdminController;
+use App\Http\Controllers\Professor\AulaAdminController;
+use App\Http\Controllers\Professor\DuvidaController;
+use App\Http\Controllers\Professor\ProfessorAlunoController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Professor\QuizController as ProfessorQuizController;
 
 /*
 |--------------------------------------------------------------------------
-| Páginas do site (público)
+| Site (público)
 |--------------------------------------------------------------------------
 */
-Route::view('/', 'site.home')->name('site.home');
+Route::get('/', [HomeController::class, 'index'])->name('site.home');
+Route::get('/catalogo', [CursoController::class, 'index'])->name('site.cursos');
 
-// Catálogo (view) – usar /catalogo para não colidir com CRUD /cursos
-Route::view('/catalogo', 'site.cursos')->name('site.cursos');
+Route::get('/curso/{id}', [CursoController::class, 'show'])->name('site.curso.detalhe');
 
-// ADD: (Opcional) Detalhe do curso público, se você for ter página de detalhes.
-//      Ajuste o controller/slug conforme seu domínio.
-Route::get('/catalogo/{slug}', [CursoController::class, 'publicShow'])
-    ->where('slug', '[A-Za-z0-9\-\_]+')
-    ->name('site.cursos.show'); // mantém o prefixo site.* para a navbar pública
+
+Route::middleware('aluno.auth')->group(function () {
+    Route::get('/checkout/{curso}', [CheckoutController::class, 'start'])
+        ->name('checkout.start')
+        ->whereNumber('curso'); // <<< só números; não pega "retorno"
+    // Checkout do carrinho (vários cursos)
+    Route::post('/checkout/start-cart',[CheckoutController::class, 'startCart'])->name('checkout.start.cart');
+});
+
+
+
+Route::get('/carrinho',                   [CheckoutController::class, 'cart'])->name('checkout.cart');
+Route::post('/carrinho/add/{curso}',      [CheckoutController::class, 'add'])->name('checkout.cart.add');
+Route::delete('/carrinho/remove/{curso}', [CheckoutController::class, 'remove'])->name('checkout.cart.remove');
+Route::get('/carrinho/count',             [CheckoutController::class, 'count'])->name('checkout.cart.count');
+
+
+
+// Retornos do Mercado Pago
+Route::get('/checkout/retorno',[CheckoutController::class, 'retorno'])->name('checkout.retorno');
+Route::get('/checkout/webhook',[CheckoutController::class, 'webhook'])->name('checkout.webhook');
+
+
 
 /*
 |--------------------------------------------------------------------------
-| Portais (logins)
+| Área do Aluno
 |--------------------------------------------------------------------------
-*/php
-// Portal do Aluno
-Route::prefix('aluno')->group(function () {
-    // Login/Logout
-    Route::get('login',  [AlunoAuthController::class, 'showLoginForm'])->name('portal.aluno');
-    Route::post('login', [AlunoAuthController::class, 'login'])->name('aluno.login');
-    Route::post('logout',[AlunoAuthController::class, 'logout'])->name('aluno.logout');
+*/
+Route::prefix('aluno')->name('aluno.')->group(function () {
+    // Auth
+    Route::get('login', [AlunoAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [AlunoAuthController::class, 'login'])->name('login.do');
+    Route::post('logout', [AlunoAuthController::class, 'logout'])->name('logout');
 
-    // (OPCIONAL) Cadastro do Aluno
-    if (class_exists(AlunoRegisterController::class)) {
-        Route::get('cadastro',  [AlunoRegisterController::class, 'show'])->name('aluno.register');
-        Route::post('cadastro', [AlunoRegisterController::class, 'store'])->name('aluno.register.store');
-    }
+    Route::get('register', [AlunoAuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('register', [AlunoAuthController::class, 'register'])->name('register.do');
 
-    // (OPCIONAL) Esqueci minha senha (broker 'alunos')
-    if (class_exists(AlunoPasswordController::class)) {
-        Route::get('senha/esqueci',   [AlunoPasswordController::class, 'request'])->name('aluno.password.request');
-        Route::post('senha/email',    [AlunoPasswordController::class, 'email'])->name('aluno.password.email');
-        Route::get('senha/reset/{t}', [AlunoPasswordController::class, 'reset'])->name('aluno.password.reset');
-        Route::post('senha/reset',    [AlunoPasswordController::class, 'update'])->name('aluno.password.update');
-    }
+    // Protegido
+    Route::middleware('aluno.auth')->group(function () {
 
-    // (OPCIONAL) Acesso Demo
-    Route::post('demo', [AlunoAuthController::class, 'demoLogin'])->name('aluno.demo');
+        // Dashboard e menus
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::post('matricular/{curso}', [MatriculaController::class, 'store'])->name('matricular');
 
-    // Dashboard protegido do Aluno
-    Route::middleware('auth:aluno')->group(function () {
-        Route::view('dashboard', 'aluno.dashboard')->name('aluno.dashboard');
+        Route::get('cursos', [StudentCoursesController::class, 'index'])->name('cursos');
+        Route::get('certificados', [StudentCertificatesController::class, 'index'])->name('certificados');
+        Route::post('curso/{curso}/certificado', [StudentCertificatesController::class, 'issue'])
+            ->name('curso.certificado.emitir');
+        Route::get('pagamentos', [StudentPaymentsController::class, 'index'])->name('pagamentos');
+        Route::get('perfil', [StudentProfileController::class, 'index'])->name('perfil');
+
+        /**
+         * CONTEÚDO DO CURSO (player + sidebar)
+         */
+        Route::get('cursos/{curso}', [CursoConteudoController::class, 'show'])
+            ->name('curso.conteudo');
+
+        Route::get('cursos/{curso}/modulos/{modulo}', [CursoConteudoController::class, 'showModulo'])
+            ->name('curso.modulo');
+
+        Route::get('cursos/{curso}/modulos/{modulo}/aulas/{aula}', [CursoConteudoController::class, 'show'])
+            ->name('curso.modulo.aula');
+
+        /**
+         * PROGRESSO DE AULA
+         */
+        Route::get('aulas/{aula}/progresso', [AulaProgressoController::class, 'show'])->name('aula.progresso.show');
+        Route::post('aulas/{aula}/progresso', [AulaProgressoController::class, 'store'])->name('aula.progresso.store');
+        Route::get('certificados/verificar/{codigo}', [StudentCertificatesController::class,'verify'])->name('certificados.verify');
+        /**
+         * QUIZ (prova do módulo)
+         */
+        Route::get('cursos/{curso}/quiz/{quiz}', [AlunoQuizController::class, 'show'])
+            ->name('quiz.show');
+
+        Route::post('cursos/{curso}/quiz/{quiz}', [AlunoQuizController::class, 'submit'])
+            ->name('quiz.submit');
+
+        // 🔧 Ajuste: {tentativa} para bater com QuizTentativa $tentativa
+        Route::get('cursos/{curso}/quiz/{quiz}/resultado/{tentativa}', [AlunoQuizController::class, 'result'])
+            ->name('quiz.result');
+
+        Route::get('cursos/{curso}/quiz/{quiz}/refazer', [AlunoQuizController::class, 'refazer'])
+            ->name('quiz.refazer');
+
     });
 });
 
-// Portal do Professor
-Route::prefix('professor')->group(function () {
-    Route::get('login',  [ProfessorAuthController::class, 'showLoginForm'])->name('portal.professor');
-    Route::post('login', [ProfessorAuthController::class, 'login'])->name('professor.login');
-    Route::post('logout',[ProfessorAuthController::class, 'logout'])->name('professor.logout');
-
-    // Dashboard protegido do Professor
-    Route::middleware('auth:professor')->group(function () {
-        Route::view('dashboard', 'professor.dashboard')->name('professor.dashboard');
-    });
-});
+/*
+|--------------------------------------------------------------------------
+| Atalhos de Portal (redirecionam)
+|--------------------------------------------------------------------------
+*/
+Route::get('/portal/aluno', fn () => redirect()->route('aluno.dashboard'))->name('portal.aluno');
+Route::get('/portal/professor', fn () => redirect()->route('prof.dashboard'))->name('portal.professor');
 
 /*
 |--------------------------------------------------------------------------
-| CRUDs (padrão REST) — por ora, mantidos no web.php
-| Dica: futuramente mover para routes/api.php e proteger com auth/token.
+| Portal do Professor
 |--------------------------------------------------------------------------
 */
-Route::prefix('cursos')->group(function () {
-    Route::get('/',            [CursoController::class, 'index']);
-    Route::get('/{curso}',     [CursoController::class, 'show']);
-    Route::post('/',           [CursoController::class, 'store']);
-    Route::put('/{curso}',     [CursoController::class, 'update']);
-    Route::delete('/{curso}',  [CursoController::class, 'destroy']);
-});
+Route::prefix('prof')->name('prof.')->group(function () {
+    // Auth
+    Route::get('login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('login', [AuthController::class, 'loginProfessor'])->name('login.do');
+    Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::prefix('modalidades')->group(function () {
-    Route::get('/',                 [ModalidadeController::class, 'index']);
-    Route::get('/{modalidade}',     [ModalidadeController::class, 'show']);
-    Route::post('/',                [ModalidadeController::class, 'store']);
-    Route::put('/{modalidade}',     [ModalidadeController::class, 'update']);
-    Route::delete('/{modalidade}',  [ModalidadeController::class, 'destroy']);
-});
+    // Protegido
+    Route::middleware('prof.auth')->group(function () {
+        // Dashboard
+        Route::get('dashboard', [ProfessorDashboardController::class, 'index'])->name('dashboard');
 
-Route::prefix('modulos')->group(function () {
-    Route::get('/',             [ModuloController::class, 'index']);
-    Route::get('/{modulo}',     [ModuloController::class, 'show']);
-    Route::post('/',            [ModuloController::class, 'store']);
-    Route::put('/{modulo}',     [ModuloController::class, 'update']);
-    Route::delete('/{modulo}',  [ModuloController::class, 'destroy']);
-});
+        // Dúvidas
+        Route::get('duvidas', [DuvidaController::class, 'index'])->name('duvidas.index');
+        Route::post('duvidas/{duvida}/lida', [DuvidaController::class, 'markRead'])->name('duvidas.markRead');
 
-Route::prefix('aulas')->group(function () {
-    Route::get('/',           [AulaController::class, 'index']);
-    Route::get('/{aula}',     [AulaController::class, 'show']);
-    Route::post('/',          [AulaController::class, 'store']);
-    Route::put('/{aula}',     [AulaController::class, 'update']);
-    Route::delete('/{aula}',  [AulaController::class, 'destroy']);
-});
+        // Alunos
+        Route::get('alunos', [ProfessorAlunoController::class, 'index'])->name('alunos.index');
 
-Route::prefix('pedidos')->group(function () {
-    Route::get('/',            [PedidoController::class, 'index']);
-    Route::get('/{pedido}',    [PedidoController::class, 'show']);
-    Route::post('/',           [PedidoController::class, 'store']);
-    Route::put('/{pedido}',    [PedidoController::class, 'update']);
-    Route::delete('/{pedido}', [PedidoController::class, 'destroy']);
-});
+        // Cursos (CRUD)
+        Route::get('cursos', [CursoAdminController::class, 'index'])->name('cursos.index');
+        Route::get('cursos/criar', [CursoAdminController::class, 'create'])->name('cursos.create');
+        Route::post('cursos', [CursoAdminController::class, 'store'])->name('cursos.store');
+        Route::get('cursos/{curso}/editar', [CursoAdminController::class, 'edit'])->name('cursos.edit');
+        Route::put('cursos/{curso}', [CursoAdminController::class, 'update'])->name('cursos.update');
+        Route::delete('cursos/{curso}', [CursoAdminController::class, 'destroy'])->name('cursos.destroy');
 
-Route::prefix('pagamentos')->group(function () {
-    Route::get('/',                 [PagamentoController::class, 'index']);
-    Route::get('/{pagamento}',      [PagamentoController::class, 'show']);
-    Route::post('/',                [PagamentoController::class, 'store']);
-    Route::put('/{pagamento}',      [PagamentoController::class, 'update']);
-    Route::delete('/{pagamento}',   [PagamentoController::class, 'destroy']);
-});
-// Webhook Mercado Pago (público)
-Route::post('pagamentos/webhook/mercadopago', [PagamentoController::class, 'webhook']);
+        // Capa do curso
+        Route::post('cursos/{curso}/capa', [CursoMediaController::class, 'uploadCover'])->name('cursos.capa.upload');
+        Route::delete('cursos/{curso}/capa', [CursoMediaController::class, 'removeCover'])->name('cursos.capa.remove');
 
-Route::prefix('matriculas')->group(function () {
-    Route::get('/',               [MatriculaController::class, 'index']);
-    Route::get('/{matricula}',    [MatriculaController::class, 'show']);
-    Route::post('/',              [MatriculaController::class, 'store']);
-    Route::put('/{matricula}',    [MatriculaController::class, 'update']);
-    Route::delete('/{matricula}', [MatriculaController::class, 'destroy']);
-});
+        // Módulos
+        Route::get('cursos/{curso}/modulos', [ModuloAdminController::class, 'index'])->name('cursos.modulos.index');
+        Route::post('cursos/{curso}/modulos', [ModuloAdminController::class, 'store'])->name('cursos.modulos.store');
+        Route::put('cursos/{curso}/modulos/{modulo}', [ModuloAdminController::class, 'update'])->name('cursos.modulos.update');
+        Route::delete('cursos/{curso}/modulos/{modulo}', [ModuloAdminController::class, 'destroy'])->name('cursos.modulos.destroy');
+        Route::post('cursos/{curso}/modulos/reordenar', [ModuloAdminController::class, 'reorder'])->name('cursos.modulos.reorder');
 
-Route::prefix('provas')->group(function () {
-    Route::get('/',            [ProvaController::class, 'index']);
-    Route::get('/{prova}',     [ProvaController::class, 'show']);
-    Route::post('/',           [ProvaController::class, 'store']);
-    Route::put('/{prova}',     [ProvaController::class, 'update']);
-    Route::delete('/{prova}',  [ProvaController::class, 'destroy']);
-});
+        // Aulas
+        Route::get('cursos/{curso}/modulos/{modulo}/aulas', [AulaAdminController::class, 'index'])->name('cursos.modulos.aulas.index');
+        Route::post('cursos/{curso}/modulos/{modulo}/aulas', [AulaAdminController::class, 'store'])->name('cursos.modulos.aulas.store');
+        Route::put('cursos/{curso}/modulos/{modulo}/aulas/{aula}', [AulaAdminController::class, 'update'])->name('cursos.modulos.aulas.update');
+        Route::delete('cursos/{curso}/modulos/{modulo}/aulas/{aula}', [AulaAdminController::class, 'destroy'])->name('cursos.modulos.aulas.destroy');
+        Route::post('cursos/{curso}/modulos/{modulo}/aulas/reordenar', [AulaAdminController::class, 'reorder'])->name('cursos.modulos.aulas.reorder');
 
-Route::prefix('questoes')->group(function () {
-    Route::get('/',             [QuestaoController::class, 'index']);
-    Route::get('/{questao}',    [QuestaoController::class, 'show']);
-    Route::post('/',            [QuestaoController::class, 'store']);
-    Route::put('/{questao}',    [QuestaoController::class, 'update']);
-    Route::delete('/{questao}', [QuestaoController::class, 'destroy']);
-});
+        // Mídias da aula
+        Route::post('cursos/{curso}/modulos/{modulo}/aulas/{aula}/midia', [AulaAdminController::class, 'uploadMedia'])->name('cursos.modulos.aulas.media.upload');
+        Route::delete('cursos/{curso}/modulos/{modulo}/aulas/{aula}/midia/{media}', [AulaAdminController::class, 'removeMedia'])->name('cursos.modulos.aulas.media.remove');
 
-Route::prefix('certificados')->group(function () {
-    Route::get('/',                   [CertificadoController::class, 'index']);
-    Route::get('/{certificado}',      [CertificadoController::class, 'show']);
-    Route::post('/',                  [CertificadoController::class, 'store']);
-    Route::delete('/{certificado}',   [CertificadoController::class, 'destroy']);
-});
-// verificação pública por código
-Route::get('certificados/verificar/{codigo}', [CertificadoController::class, 'verify']);
+//        // Quiz do professor (CRUD) — usando alias para evitar conflito com AlunoQuizController
+//        Route::resource('cursos.quizzes', ProfessorQuizController::class)->shallow();     // /prof/cursos/{curso}/quizzes
+//        Route::resource('modulos.quizzes', ProfessorQuizController::class)->shallow();    // /prof/modulos/{modulo}/quizzes
 
-Route::prefix('mensagens-suporte')->group(function () {
-    Route::get('/',                     [MensagemSuporteController::class, 'index']);
-    Route::get('/{mensagemSuporte}',    [MensagemSuporteController::class, 'show']);
-    Route::post('/',                    [MensagemSuporteController::class, 'store']);
-    Route::put('/{mensagemSuporte}',    [MensagemSuporteController::class, 'update']);
-    Route::delete('/{mensagemSuporte}', [MensagemSuporteController::class, 'destroy']);
-});
 
-// ADD: Fallback 404 amigável (mantém app bonito em rotas inexistentes)
-Route::fallback(function () {
-    return response()->view('errors.404', [], 404);
+        Route::get('quizzes',             [ProfessorQuizController::class, 'index'])->name('quizzes.index');
+        Route::get('quizzes/create',      [ProfessorQuizController::class, 'create'])->name('quizzes.create');
+        Route::post('quizzes',            [ProfessorQuizController::class, 'store'])->name('quizzes.store');
+        Route::get('quizzes/{quiz}/edit', [ProfessorQuizController::class, 'edit'])->name('quizzes.edit');
+        Route::put('quizzes/{quiz}',      [ProfessorQuizController::class, 'update'])->name('quizzes.update');
+    });
 });

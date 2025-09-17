@@ -2,73 +2,107 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Curso;
+
+
+use App\Models\Categorias;
+use App\Models\Cursos;
 use Illuminate\Http\Request;
 
 class CursoController extends Controller
 {
     public function index(Request $request)
     {
-        $q = $request->get('q');
-        $ativos = $request->boolean('ativos', null);
+        $query = Cursos::with(['categoria','instrutor'])
+            ->where('status','publicado');
 
-        $query = Curso::query()->with(['modalidades', 'modules']);
+        // Buscar por "busca" (título/descrição)
+        $busca = trim((string)$request->query('busca'));
+        $query->when($busca !== '', function ($q) use ($busca) {
+            $q->where(function($w) use ($busca){
+                $w->where('titulo','like',"%{$busca}%")
+                    ->orWhere('descricao_curta','like',"%{$busca}%")
+                        ->orWhere('cursos.descricao_completa','like',"%{$busca}%");
 
-        if ($q) $query->where(fn($qq) =>
-        $qq->where('titulo', 'like', "%$q%")
-            ->orWhere('resumo', 'like', "%$q%")
-        );
-        if (!is_null($ativos)) $query->where('ativo', $ativos);
+            });
+        });
 
-        return $query->orderBy('titulo')->paginate(20);
+        // Filtrar por categoria (id)
+        $categoriaId = $request->query('categoria');
+        $query->when($categoriaId, function($q) use ($categoriaId){
+            $q->where('categoria_id', $categoriaId);
+            // Se você quiser filtrar por nome em vez de id:
+            // $q->whereHas('categoria', fn($c)=>$c->where('nome',$categoriaId));
+        });
+
+        $cursos = $query->paginate(12)->appends($request->query());
+        $categorias = Categorias::orderBy('nome')->get();
+
+        return view('site.catalogo', compact('cursos','categorias'));
     }
 
-    public function show(Curso $curso)
+
+    public function show($id)
     {
-        return $curso->load(['modalidades', 'modules.lessons']);
+        $curso = Cursos::with([
+            'categoria',
+            'instrutor',
+            'modulos.aulas',
+            //'avaliacoes.usuario'
+        ])->findOrFail($id);
+
+        return view('site.curso-detalhe', compact('curso'));
+
+//        return response()->json($curso);
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'titulo' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:cursos,slug',
+            'descricao' => 'required|string',
+            'categoria_id' => 'required|exists:categorias,id',
+            'nivel' => 'required|in:Iniciante,Intermediário,Avançado',
+            'preco' => 'nullable|numeric|min:0',
+            'duracao_horas' => 'nullable|integer|min:1',
+            'imagem_capa' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'resumo' => 'nullable|string',
-            'descricao' => 'nullable|string',
-            'carga_horaria' => 'required|integer|min:0',
-            'nota_minima' => 'required|integer|min:0|max:100',
-            'validade_meses' => 'nullable|integer|min:0',
-            'imagem_capa' => 'nullable|string',
-            'video_intro' => 'nullable|string',
-            'ativo' => 'boolean',
         ]);
 
-        $curso = Curso::create($data);
-        return response()->json($curso, 201);
-    }
+        if ($request->hasFile('imagem_capa')) {
+            $validated['imagem_capa'] = $request->file('imagem_capa')
+                ->store('cursos/capas', 'public');
+        }
 
-    public function update(Request $request, Curso $curso)
-    {
-        $data = $request->validate([
-            'titulo' => 'sometimes|required|string|max:255',
-            'slug' => 'sometimes|required|string|max:255|unique:cursos,slug,' . $curso->id,
-            'resumo' => 'nullable|string',
-            'descricao' => 'nullable|string',
-            'carga_horaria' => 'sometimes|required|integer|min:0',
-            'nota_minima' => 'sometimes|required|integer|min:0|max:100',
-            'validade_meses' => 'nullable|integer|min:0',
-            'imagem_capa' => 'nullable|string',
-            'video_intro' => 'nullable|string',
-            'ativo' => 'boolean',
+        $validated['instrutor_id'] = auth()->id();
+        $validated['status'] = $request->is_draft ? 'rascunho' : 'publicado';
+
+        $curso = Cursos::create($validated);
+
+        // Criar módulos e aulas se fornecidos
+        if ($request->modulos) {
+            foreach ($request->modulos as $index => $moduloData) {
+                $modulo = $curso->modulos()->create([
+                    'titulo' => $moduloData['titulo'],
+                    'descricao' => $moduloData['descricao'],
+                    'ordem' => $index + 1
+                ]);
+
+                if (isset($moduloData['lessons'])) {
+                    foreach ($moduloData['lessons'] as $lessonIndex => $aulaData) {
+                        $modulo->aulas()->create([
+                            'titulo' => $aulaData['titulo'],
+                            'duracao_minutos' => $aulaData['duracao'],
+                            'tipo_conteudo' => $aulaData['tipo'],
+                            'ordem' => $lessonIndex + 1
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'curso' => $curso->load('modulos.aulas')
         ]);
-
-        $curso->update($data);
-        return $curso->fresh(['modalidades', 'modules']);
-    }
-
-    public function destroy(Curso $curso)
-    {
-        $curso->delete();
-        return response()->noContent();
     }
 }

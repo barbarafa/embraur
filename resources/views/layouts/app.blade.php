@@ -1,118 +1,137 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full" x-data
-      x-bind:data-theme="localStorage.getItem('theme') ?? 'light'">
+<html lang="pt-br">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@hasSection('title')@yield('title') · @endif{{ config('app.name', 'Laravel') }}</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@yield('title', 'Embraur')</title>
 
-    {{-- SEO básico / Open Graph --}}
-    <meta name="description" content="@yield('meta_description', config('app.name').' – Aplicação')">
-    <link rel="canonical" href="{{ url()->current() }}">
-    <meta property="og:title" content="@yield('title', config('app.name'))">
-    <meta property="og:description" content="@yield('meta_description', config('app.name').' – Aplicação')">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:type" content="website">
-
-    {{-- Segurança --}}
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    {{-- Favicon --}}
-    <link rel="icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-    {{-- Vite --}}
+    {{-- mantém o seu vite (se já estiver ok, segue usando) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Livewire --}}
-    @if(class_exists(\Livewire\Livewire::class))
-        @livewireStyles
-    @endif
-
-    {{-- Estilos extras --}}
-    @stack('styles')
-
-    <style>[x-cloak]{display:none !important}</style>
-
-    {{-- Head extra --}}
-    @stack('head')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {{-- fallback SEM instalar nada: deixa tudo bonito mesmo se o vite não carregar --}}
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .container-page{max-width:1100px;margin:0 auto;padding-left:1rem;padding-right:1rem}
+        .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:.5rem;padding:.5rem .9rem;font-weight:600;border:1px solid transparent;line-height:1}
+        .btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}
+        .btn-outline{background:#fff;color:#0f172a;border-color:#cbd5e1}.btn-outline:hover{background:#f8fafc}
+        .btn-soft{background:#f1f5f9;color:#0f172a}.btn-soft:hover{background:#e2e8f0}
+    </style>
 </head>
-<body class="min-h-full antialiased bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+@stack('scripts')
+<body class="bg-slate-50 text-slate-800">
+{{-- Header ÚNICO --}}
+<header class="bg-white border-b">
+    <div class="container-page flex items-center justify-between h-14">
+        <a href="{{ route('site.home') }}" class="flex items-center gap-2 font-semibold">
+            <span class="inline-block w-5 h-5 rounded border border-slate-300"></span> Embraur
+        </a>
 
-{{-- Navbar dinâmica --}}
-@hasSection('navbar')
-    @yield('navbar')
-@else
-    @if (request()->routeIs('site.*'))
-        {{-- Navbar pública do site --}}
-        @includeIf('site.navbar')
-    @else
-        {{-- Navbar padrão (dashboard/admin) --}}
-        <header class="border-b bg-white/70 backdrop-blur dark:bg-gray-900/70">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <a href="{{ url('/') }}" class="font-semibold tracking-tight">
-                    {{ config('app.name', 'Laravel') }}
-                </a>
-                <nav class="flex items-center gap-3">
-                    <a href="{{ url('/') }}" class="hover:underline">Início</a>
-                    @auth
-                        <a href="{{ url('/dashboard') }}" class="hover:underline">Dashboard</a>
-                    @endauth
-                </nav>
+        <nav class="hidden md:flex items-center gap-6 text-sm">
+            <a href="{{ route('site.home') }}" class="hover:text-blue-600">Início</a>
+            <a href="{{ route('site.cursos') }}" class="hover:text-blue-600">Cursos</a>
+            <a href="#" class="hover:text-blue-600">Sobre</a>
+            <a href="#" class="hover:text-blue-600">Contato</a>
+        </nav>
+
+        <div class="flex items-center gap-2">
+            <a href="{{ route('portal.aluno') }}" class="hidden sm:inline-flex btn btn-soft">Portal do Aluno</a>
+            <a href="{{ route('portal.professor') }}" class="hidden sm:inline-flex btn btn-outline">Portal do Professor</a>
+
+            @if(session('aluno_id'))
+                <form id="logoutForm" action="{{ route('aluno.logout') }}" method="POST" class="hidden md:inline-flex">
+                    @csrf
+                    <button type="submit" class="btn-primary h-9 px-4 rounded-md">Sair</button>
+                </form>
+            @endif
+        </div>
+    </div>
+</header>
+
+@if (session('success') || session('error') || session('info'))
+    <div class="container-page max-w-5xl mx-auto mt-4">
+        @if (session('success'))
+            <div class="mb-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-900 px-4 py-3">
+                {{ session('success') }}
             </div>
-        </header>
-    @endif
+        @endif
+        @if (session('info'))
+            <div class="mb-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-900 px-4 py-3">
+                {{ session('info') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-3 rounded-lg border border-red-200 bg-red-50 text-red-900 px-4 py-3">
+                {{ session('error') }}
+            </div>
+        @endif
+    </div>
 @endif
 
-{{-- Flash messages --}}
-<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 space-y-2">
-    @includeWhen(View::exists('partials.flash'), 'partials.flash')
-
-    @if(session('status'))
-        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-100">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-100">
-            <strong>Ops!</strong> Corrija os erros abaixo.
-        </div>
-    @endif
-</div>
-
-{{-- Page header/actions --}}
-@if(View::hasSection('page_header') || View::hasSection('page_actions'))
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>@yield('page_header')</div>
-            <div class="flex items-center gap-2">@yield('page_actions')</div>
+{{-- VALIDAÇÃO: lista de erros (mostra até 5) --}}
+@if ($errors->any())
+    @php
+        $all = $errors->all();                     // array de mensagens
+        $top = collect($all)->take(5);             // pega só as 5 primeiras
+    @endphp
+    <div class="container-page max-w-5xl mx-auto mt-2">
+        <div class="mb-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3">
+            <strong class="block mb-1">Corrija os campos abaixo:</strong>
+            <ul class="list-disc pl-5 space-y-0.5">
+                @foreach ($top as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+                @if (count($all) > 5)
+                    <li>… e mais {{ count($all) - 5 }} erro(s).</li>
+                @endif
+            </ul>
         </div>
     </div>
 @endif
 
-{{-- Conteúdo principal --}}
-<main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-    @yield('content')
-</main>
+<main>@yield('content')</main>
 
-{{-- Footer --}}
-@hasSection('footer')
-    @yield('footer')
-@else
-    <footer class="border-t bg-white/70 backdrop-blur dark:bg-gray-900/70">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-sm text-gray-500 dark:text-gray-400">
-            © {{ now()->year }} {{ config('app.name', 'Laravel') }}. Todos os direitos reservados.
+{{-- Footer ÚNICO --}}
+<footer class="mt-10 border-t bg-white">
+    <div class="container-page py-8 grid grid-cols-1 md:grid-cols-4 gap-8 text-sm">
+        <div>
+            <div class="font-semibold mb-2">Embraur</div>
+            <p class="text-slate-600">Plataforma completa de ensino a distância com cursos de qualidade e certificação reconhecida.</p>
         </div>
-    </footer>
-@endif
-
-{{-- Livewire Scripts --}}
-@if(class_exists(\Livewire\Livewire::class))
-    @livewireScripts
-@endif
-
-{{-- Scripts extras --}}
-@stack('scripts')
+        <div>
+            <div class="font-semibold mb-2">Links Rápidos</div>
+            <ul class="space-y-1 text-slate-600">
+                <li><a class="hover:text-blue-600" href="{{ route('site.cursos') }}">Catálogo de Cursos</a></li>
+                <li><a class="hover:text-blue-600" href="#">Sobre Nós</a></li>
+                <li><a class="hover:text-blue-600" href="#">Contato</a></li>
+                <li><a class="hover:text-blue-600" href="#">Central de Ajuda</a></li>
+            </ul>
+        </div>
+        <div>
+            <div class="font-semibold mb-2">Área do Aluno</div>
+            <ul class="space-y-1 text-slate-600">
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.login') }}">Login</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.register') }}">Cadastro</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.cursos') }}">Meus Cursos</a></li>
+                <li><a class="hover:text-blue-600" href="{{ route('aluno.certificados') }}">Certificados</a></li>
+            </ul>
+        </div>
+        <div>
+            <div class="font-semibold mb-2">Contato</div>
+            <ul class="space-y-1 text-slate-600">
+                <li>contato@eadpro.com.br</li><li>(11) 99999-9999</li><li>São Paulo, SP</li>
+            </ul>
+        </div>
+    </div>
+    <div class="text-center text-xs text-slate-500 py-4 border-t">© 2024 Embraur. Todos os direitos reservados.</div>
+</footer>
 </body>
 </html>
+
+<script>
+    // some apenas o de sucesso após 4s
+    setTimeout(()=>{
+        document.querySelectorAll('[role="alert"].border-blue-200')?.forEach(el => el.remove());
+    }, 4000);
+</script>
