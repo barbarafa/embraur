@@ -23,20 +23,18 @@
                         >
                     </div>
 
-                    <div class="w-full md:w-auto">
-                        <select name="categoria" class="w-full md:w-56 px-3 py-2 border rounded-md">
-                            <option value="">Todas as categorias</option>
-                            @foreach($categorias as $cat)
-                                <option value="{{ $cat->slug }}" @selected(request('categoria')===$cat->slug)>
-                                    {{ $cat->nome }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                    {{-- Categoria --}}
+                    <select name="categoria" class="w-full md:w-60 border rounded-md py-2 px-3">
+                        <option value="">Todas as categorias</option>
+                        @foreach($categorias as $cat)
+                            <option value="{{ $cat->id }}" {{ (string)request('categoria')===(string)$cat->id ? 'selected' : '' }}>
+                                {{ $cat->nome }}
+                            </option>
+                        @endforeach
+                    </select>
 
-                    <button class="btn btn-primary px-4 py-2 rounded-md">
-                        Filtrar
-                    </button>
+                    <button class="btn btn-primary">Filtrar</button>
+                    <a href="{{ route('site.cursos') }}" class="btn btn-outline">Limpar</a>
                 </div>
             </div>
         </form>
@@ -44,67 +42,67 @@
         {{-- Grid de cards --}}
         <div class="grid gap-4 mt-6 md:grid-cols-2 lg:grid-cols-3">
             @forelse ($cursos as $curso)
-                <article class="rounded-xl border bg-white overflow-hidden shadow-sm hover:shadow-md transition">
-                    {{-- Capa --}}
-                    <div class="h-36 bg-slate-100">
+                <article class="rounded-xl border bg-white overflow-hidden shadow-sm hover:shadow-md transition h-full flex flex-col">
+                    {{-- Capa padronizada --}}
+                    <div class="bg-slate-100">
                         <img
                             src="{{ $curso->imagem_capa_url }}"
                             alt="Capa do curso {{ $curso->titulo }}"
-                            class="w-full h-full object-cover"
+                            class="w-full h-full object-cover aspect-[16/9]"
                             loading="lazy"
                         >
                     </div>
 
                     {{-- Conteúdo --}}
-                    <div class="p-4 space-y-3">
+                    <div class="p-4 space-y-3 flex-1 flex flex-col">
                         <div class="flex items-center justify-between text-[11px]">
-                        <span class="px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50">
-                            {{ $curso->categoria->nome ?? 'Sem categoria' }}
-                        </span>
+            <span class="px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50">
+                {{ $curso->categoria->nome ?? 'Sem categoria' }}
+            </span>
                             <span class="px-2 py-1 rounded border border-slate-200 text-slate-600 bg-slate-50">
-                            {{ $curso->nivel ?? '—' }}
-                        </span>
+                {{ $curso->nivel ?? '—' }}
+            </span>
                         </div>
 
-                        <h3 class="font-semibold leading-snug line-clamp-2">
+                        {{-- Título com clamp (2 linhas) --}}
+                        <h3 class="font-semibold leading-snug line-clamp-2" title="{{ $curso->titulo }}">
                             {{ $curso->titulo }}
                         </h3>
 
-                        <p class="text-sm text-slate-600 line-clamp-2">
+                        {{-- Descrição também clampada --}}
+                        <p class="text-sm text-slate-600 line-clamp-2" title="{{ $curso->descricao_curta }}">
                             {{ $curso->descricao_curta ?? '' }}
                         </p>
 
                         <div class="text-xs text-slate-500 flex items-center gap-4">
                             <span>⏱️ {{ (int)($curso->carga_horaria_total ?? 0) }}h</span>
-                            <span>👥 {{ number_format($curso->matriculas_count ?? 0, 0, ',', '.') }} alunos</span>
                         </div>
 
-                        {{-- Preço: usa preco_original como "de", quando maior que preco --}}
+                        {{-- Preço --}}
                         <div class="text-sm">
                             @php
                                 $temPromo = isset($curso->preco_original) && (float)$curso->preco_original > (float)$curso->preco;
                             @endphp
-
                             @if($temPromo)
                                 <span class="line-through text-slate-400 mr-1">
-                                R$ {{ number_format($curso->preco_original, 2, ',', '.') }}
-                            </span>
+                    R$ {{ number_format($curso->preco_original, 2, ',', '.') }}
+                </span>
                             @endif
-
                             <span class="font-semibold text-blue-700">
-                            R$ {{ number_format($curso->preco, 2, ',', '.') }}
-                        </span>
+                R$ {{ number_format($curso->preco, 2, ',', '.') }}
+            </span>
                         </div>
 
-                        {{-- Botão (comentado por enquanto) --}}
+                        {{-- empurra o botão para o rodapé do card --}}
+                        <div class="mt-auto"></div>
 
-                        <a href="{{ route('site.curso.detalhe', $curso->id) }}"
-                           class="btn btn-primary w-full">
+                        <a href="{{ route('site.curso.detalhe', $curso->id) }}" class="btn btn-primary w-full">
                             Ver Detalhes
                         </a>
-
                     </div>
                 </article>
+
+
             @empty
                 <div class="md:col-span-2 lg:col-span-3 text-center text-slate-500 py-10">
                     Nenhum curso encontrado.
@@ -118,3 +116,12 @@
         </div>
     </section>
 @endsection
+
+<style>
+    .line-clamp-2{
+        display:-webkit-box;
+        -webkit-line-clamp:2;
+        -webkit-box-orient:vertical;
+        overflow:hidden;
+    }
+</style>

@@ -16,15 +16,71 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {{-- COLUNA PRINCIPAL (PLAYER + CONTEÚDO) --}}
             <div class="lg:col-span-8 space-y-4">
-                {{-- Player --}}
-                <div class="rounded-lg border bg-black aspect-video flex items-center justify-center">
-                    @if($aula->tipo === 'video' && $aula->conteudo_url)
-                        <iframe class="w-full h-full rounded-lg"
-                                src="{{ $aula->conteudo_url }}" allowfullscreen></iframe>
+                @php
+                    use Illuminate\Support\Str;
+
+                    $tipo = Str::lower($aula->tipo ?? '');
+                    $isVideo = $tipo === 'video' && filled($aula->conteudo_url);
+                    $isText  = $tipo === 'texto' && filled($aula->conteudo_texto);
+
+                    $src = trim((string)($aula->conteudo_url ?? ''));
+
+                    if ($isVideo && $src) {
+                        if (Str::contains($src, 'youtu.be/')) {
+                            $id  = Str::after($src, 'youtu.be/'); $id  = Str::before($id, '?');
+                            $src = 'https://www.youtube.com/embed/' . $id;
+                        } elseif (Str::contains($src, 'watch?v=')) {
+                            $id  = Str::after($src, 'v='); $id  = Str::before($id, '&');
+                            $src = 'https://www.youtube.com/embed/' . $id;
+                        } elseif (Str::contains($src, 'vimeo.com/')) {
+                            if (preg_match('~vimeo\.com/(\d+)~', $src, $m)) {
+                                $src = 'https://player.vimeo.com/video/' . $m[1];
+                            }
+                        }
+                        // YouTube: garante parâmetros para a IFrame API
+                        if (Str::contains($src, 'youtube.com/embed/')) {
+                            $src .= (Str::contains($src, '?') ? '&' : '?') . 'enablejsapi=1&rel=0';
+                        }
+                    }
+                @endphp
+
+                <div class="relative rounded-lg border aspect-video bg-black overflow-hidden">
+                    @if($isVideo)
+                        {{-- Iframe/Video ocupa 100% do frame --}}
+                        @if(Str::contains($src, ['youtube.com','youtu.be','vimeo.com','player.vimeo.com']))
+                            <iframe
+                                class="absolute inset-0 w-full h-full"
+                                src="{{ $src }}"
+                                allow="autoplay; fullscreen; picture-in-picture"
+                                allowfullscreen
+                                referrerpolicy="strict-origin-when-cross-origin"
+                            ></iframe>
+                        @else
+                            {{-- MP4 direto --}}
+                            <video
+                                class="absolute inset-0 w-full h-full"
+                                src="{{ $src }}"
+                                controls
+                                playsinline
+                            ></video>
+                        @endif
+
+                    @elseif($isText)
+                        {{-- Texto no mesmo frame, com tipografia e rolagem --}}
+                        <div class="absolute inset-0 bg-white overflow-auto overscroll-contain">
+                            <article class="prose prose-slate max-w-none p-6">
+                                {!! $aula->conteudo_texto !!}
+                            </article>
+                        </div>
+
                     @else
-                        <div class="text-white">Conteúdo da aula</div>
+                        {{-- Placeholder quando não há conteúdo --}}
+                        <div class="absolute inset-0 grid place-items-center text-slate-200">
+                            Conteúdo da aula
+                        </div>
                     @endif
                 </div>
+
 
                 {{-- Título + Navegação --}}
                 <div class="rounded-lg border p-4">
@@ -161,7 +217,217 @@
                         </div>
                     @endforeach
                 </div>
+                {{-- Bloco: Certificado (sidebar) --}}
+                @php
+
+                    // Regra simples: habilita ao concluir (CourseCompletionService seta status=concluido)
+                    $podeEmitirCert = ($matricula->status ?? null) === 'concluido';
+                @endphp
+
+                <div class="mt-4 rounded-lg border p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="font-semibold">Certificado</div>
+                            <div class="text-xs text-slate-600 mt-0.5">
+                                @if($certificado)
+                                    Emitido em {{ optional($certificado->data_emissao)->format('d/m/Y') }}.
+                                @elseif(!$podeEmitirCert)
+                                    Conclua todas as aulas/provas para liberar a emissão.
+                                @else
+                                    Parabéns! Você já pode emitir o certificado.
+                                @endif
+                            </div>
+                        </div>
+
+                        @if($certificado)
+                            <a href="{{ $certificado->url_certificado ?? route('aluno.curso.certificado.emitir', $curso->id) }}"
+                               class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap">
+                                Baixar PDF
+                            </a>
+                        @else
+                            <form method="POST" action="{{ route('aluno.curso.certificado.emitir', $curso->id) }}">
+                                @csrf
+                                <button
+                                    class="px-3 py-2 rounded whitespace-nowrap {{ $podeEmitirCert ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-200 text-slate-500 cursor-not-allowed' }}"
+                                    {{ $podeEmitirCert ? '' : 'disabled' }}>
+                                    Emitir Certificado
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
             </div>
+
+
+
+
         </div>
     </div>
 @endsection
+
+<script>
+    (function(){
+
+        const aulaId = {{ (int) $aula->id }};
+        const tipo   = "{{ $tipo }}"; // 'video' ou 'texto'
+        const isYT   = {{ Str::contains($src ?? '', 'youtube.com/embed/') ? 'true' : 'false' }};
+        const isVM   = {{ Str::contains($src ?? '', 'player.vimeo.com') ? 'true' : 'false' }};
+
+        function getCookie(name){
+            return document.cookie.split('; ').reduce((acc, cur)=>{
+                const [k, ...v] = cur.split('=');
+                return k === name ? decodeURIComponent(v.join('=')) : acc;
+            }, '');
+        }
+
+        function getCsrf(){
+            return document.querySelector('meta[name="csrf-token"]')?.content
+                || getCookie('XSRF-TOKEN'); // fallback (Laravel define esse cookie)
+        }
+
+        // POST utilitário
+        async function postProgress(aulaId, segundos, duracao, marcar=false){
+            const csrf = getCsrf();
+            const url  = `{{ url('/aluno/aulas') }}/${aulaId}/progresso`;
+
+            return fetch(url, {
+                method: 'POST',
+                credentials: 'same-origin',               // envia cookies da sessão
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,                   // meta/cookie token
+                    'X-Requested-With': 'XMLHttpRequest',   // padrão Laravel para AJAX
+                },
+                body: JSON.stringify({
+                    segundos_assistidos: Math.max(0, Math.floor(segundos || 0)),
+                    duracao_total: Math.max(1, Math.floor(duracao || 1)),
+                    marcar_concluida: marcar ? 1 : 0,
+                }),
+            });
+        }
+
+        window.postProgress = postProgress;
+
+        // Throttle para não spammar
+        let lastSentAt = 0;
+        const SEND_EVERY_MS = 10000; // 10s
+        function maybeSend(now, segundos, duracao){
+            if (now - lastSentAt >= SEND_EVERY_MS){
+                lastSentAt = now;
+                postProgress(segundos, duracao, false);
+            }
+        }
+
+        // Caso TEXTO: marcar concluído ao abrir (simples e claro em UX)
+        if (tipo === 'texto'){
+            // envie uma única vez ao abrir
+            setTimeout(()=> postProgress(1, 1, true), 500);
+
+            // (opcional) só marcar quando rolar 80%:
+            const scroller = document.querySelector('.aspect-video .overflow-auto');
+            if (scroller){
+              let done=false;
+              scroller.addEventListener('scroll', ()=>{
+                if (done) return;
+                const pct = (scroller.scrollTop + scroller.clientHeight) / scroller.scrollHeight;
+                if (pct >= 0.8){ done=true; postProgress(1,1,true); }
+              });
+            }
+            return; // nada mais a fazer para texto
+        }
+
+        // Caso VÍDEO:
+        // 1) MP4 <video>
+        const videoEl = document.querySelector('.aspect-video video');
+        if (videoEl){
+            const getDur = () => isFinite(videoEl.duration) && videoEl.duration>0 ? videoEl.duration : ({{ (int)($aula->duracao_minutos ?? 0) }} * 60) || 1;
+
+            videoEl.addEventListener('timeupdate', ()=>{
+                maybeSend(performance.now(), videoEl.currentTime, getDur());
+            });
+
+            videoEl.addEventListener('ended', ()=>{
+                postProgress(getDur(), getDur(), true);
+            });
+
+            // fallback: se o usuário pausar depois de um tempo
+            let ping = setInterval(()=>{
+                if (!document.body.contains(videoEl)) return clearInterval(ping);
+                if (!videoEl.paused && !videoEl.seeking) {
+                    maybeSend(performance.now(), videoEl.currentTime, getDur());
+                }
+            }, 3000);
+
+            return;
+        }
+
+        // 2) YouTube IFrame API
+        const ytIframe = isYT ? document.querySelector('.aspect-video iframe[src*="youtube.com/embed/"]') : null;
+        if (ytIframe){
+            // carrega API se necessário
+            if (!window.YT){
+                const s = document.createElement('script');
+                s.src = 'https://www.youtube.com/iframe_api';
+                document.head.appendChild(s);
+            }
+            window.onYouTubeIframeAPIReady = function(){
+                const player = new YT.Player(ytIframe, {
+                    events: {
+                        onReady: ()=>{
+                            // loop de coleta
+                            const tick = setInterval(()=>{
+                                try{
+                                    const dur = player.getDuration() || ({{ (int)($aula->duracao_minutos ?? 0) }} * 60) || 1;
+                                    const cur = player.getCurrentTime() || 0;
+                                    maybeSend(performance.now(), cur, dur);
+                                }catch(e){}
+                                if (!document.body.contains(ytIframe)) clearInterval(tick);
+                            }, 3000);
+                        },
+                        onStateChange: (e)=>{
+                            if (e.data === YT.PlayerState.ENDED){
+                                const dur = player.getDuration() || ({{ (int)($aula->duracao_minutos ?? 0) }} * 60) || 1;
+                                postProgress(dur, dur, true);
+                            }
+                        }
+                    }
+                });
+            };
+            return;
+        }
+
+        // 3) Vimeo player.js
+        const vmIframe = isVM ? document.querySelector('.aspect-video iframe[src*="player.vimeo.com"]') : null;
+        if (vmIframe){
+            // carrega lib
+            (function loadVM(){
+                if (window.Vimeo && window.Vimeo.Player) return initVM();
+                const s = document.createElement('script');
+                s.src = 'https://player.vimeo.com/api/player.js';
+                s.onload = initVM;
+                document.head.appendChild(s);
+            })();
+
+            function initVM(){
+                const player = new Vimeo.Player(vmIframe);
+                let last = 0, durCache = 0;
+
+                player.getDuration().then(d=> durCache = d || ({{ (int)($aula->duracao_minutos ?? 0) }} * 60) || 1);
+
+                player.on('timeupdate', (data)=>{
+                    const now = performance.now();
+                    const cur = data.seconds || 0;
+                    const dur = durCache || data.duration || 1;
+                    maybeSend(now, cur, dur);
+                });
+
+                player.on('ended', ()=>{
+                    const dur = durCache || 1;
+                    postProgress(dur, dur, true);
+                });
+            }
+        }
+    })();
+</script>
+

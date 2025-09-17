@@ -12,29 +12,34 @@ class CursoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Cursos::with(['categoria', 'instrutor'])
-            ->where('status', 'publicado');
+        $query = Cursos::with(['categoria','instrutor'])
+            ->where('status','publicado');
 
-        if ($request->search) {
-            $query->where(function($q) use ($request) {
-                $q->where('titulo', 'like', "%{$request->search}%")
-                    ->orWhere('descricao', 'like', "%{$request->search}%");
+        // Buscar por "busca" (título/descrição)
+        $busca = trim((string)$request->query('busca'));
+        $query->when($busca !== '', function ($q) use ($busca) {
+            $q->where(function($w) use ($busca){
+                $w->where('titulo','like',"%{$busca}%")
+                    ->orWhere('descricao_curta','like',"%{$busca}%")
+                        ->orWhere('cursos.descricao_completa','like',"%{$busca}%");
+
             });
-        }
+        });
 
-        if ($request->categoria) {
-            $query->whereHas('categoria', function($q) use ($request) {
-                $q->where('nome', $request->categoria);
-            });
-        }
+        // Filtrar por categoria (id)
+        $categoriaId = $request->query('categoria');
+        $query->when($categoriaId, function($q) use ($categoriaId){
+            $q->where('categoria_id', $categoriaId);
+            // Se você quiser filtrar por nome em vez de id:
+            // $q->whereHas('categoria', fn($c)=>$c->where('nome',$categoriaId));
+        });
 
-        $cursos = $query->paginate(12);
-
-        $categorias = Categorias::all();
+        $cursos = $query->paginate(12)->appends($request->query());
+        $categorias = Categorias::orderBy('nome')->get();
 
         return view('site.catalogo', compact('cursos','categorias'));
-       // return response()->json($cursos);
     }
+
 
     public function show($id)
     {

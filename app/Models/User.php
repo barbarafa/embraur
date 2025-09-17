@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class User extends Model implements Authenticatable
 {
-    use HasFactory;
+
 
     protected $table = 'users';
     protected $primaryKey = 'id';

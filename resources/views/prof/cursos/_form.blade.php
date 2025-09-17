@@ -100,10 +100,13 @@
 
             <div class="md:col-span-2">
                 <label class="text-sm font-medium">Descrição Completa</label>
-                <textarea name="descricao_completa"
-                          placeholder="Descreva detalhadamente o que os alunos irão aprender..."
-                          class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                          rows="5">{{ old('descricao_completa', $curso->descricao_completa) }}</textarea>
+                <textarea
+                    name="descricao_completa"
+                    id="descricao_completa"
+                    class="js-editor mt-1 w-full rounded-md border border-slate-300"
+                    placeholder="Descreva detalhadamente o que os alunos irão aprender..."
+                    rows="8"
+                >{{ old('descricao_completa', $curso->descricao_completa) }}</textarea>
             </div>
 
             <div>
@@ -116,13 +119,23 @@
                     <option value="avancado" @selected($nivelSel==='avancado')>Avançado</option>
                 </select>
             </div>
-
             <div>
+            <label class="text-sm font-medium">Preço original (R$)</label>
+            <input name="preco_original"
+                   value="{{ old('preco_original', $curso->preco_original) }}"
+                   type="number" min="0" step="0.01" placeholder="Ex.: 99,90"
+                   class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
+            </div>
+            <div>
+
                 <label class="text-sm font-medium">Preço (R$)</label>
                 <input name="preco"
                        value="{{ old('preco', $curso->preco) }}"
                        type="number" min="0" step="0.01" placeholder="Ex.: 99,90"
                        class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
+
+
+
             </div>
 
             <div>
@@ -244,7 +257,7 @@
                                                 class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
                                             <option value="video"   @selected($tipoSel==='video')>Vídeo</option>
                                             <option value="texto"   @selected($tipoSel==='texto')>Texto</option>
-                                            {{-- <option value="quiz"    @selected($tipoSel==='quiz')>Quiz</option> --}}
+
                                             <option value="arquivo" @selected($tipoSel==='arquivo')>Arquivo</option>
                                         </select>
                                     </div>
@@ -252,9 +265,11 @@
                                     <div class="md:col-span-4">
                                         <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
                                         <textarea
+                                            id="editor-desc-{{ $mIdx }}-{{ $aIdx }}"
                                             name="modulos[{{ $mIdx }}][aulas][{{ $aIdx }}][descricao]"
-                                            class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-                                            rows="3">{{ old("modulos.$mIdx.aulas.$aIdx.descricao", $aula->descricao) }}</textarea>
+                                            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
+                                            rows="5"
+                                        >{{ old("modulos.$mIdx.aulas.$aIdx.descricao", $aula->descricao) }}</textarea>
                                     </div>
 
                                     <div class="md:col-span-3">
@@ -327,7 +342,12 @@
 </section>
 
 {{-- JS: preview, colapsar módulos, numerar e atalhos (sem mudanças de seletor) --}}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
+
+
+
+
     (function(){
         // preview imagem
         const imgInput = document.getElementById('imagemCapa');
@@ -439,13 +459,17 @@
           <select name="modulos[${mIdx}][aulas][${aIdx}][tipo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
             <option value="video">Vídeo</option>
             <option value="texto">Texto</option>
-            <option value="quiz">Quiz</option>
             <option value="arquivo">Arquivo</option>
           </select>
         </div>
         <div class="md:col-span-4">
           <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
-          <textarea name="modulos[${mIdx}][aulas][${aIdx}][descricao]" class="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" rows="3"></textarea>
+          <textarea
+            name="modulos[${mIdx}][aulas][${aIdx}][descricao]"
+            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
+            rows="5"
+            placeholder="Descreva os pontos principais desta aula..."
+          ></textarea>
         </div>
         <div class="md:col-span-3">
           <label class="text-sm font-medium">URL do Conteúdo (opcional)</label>
@@ -499,6 +523,103 @@
         }
         addModuloBtn?.addEventListener('click', addModulo);
     })();
+
+    document.querySelectorAll('.js-editor').forEach((el) => {
+        ClassicEditor.create(el, {
+            language: 'pt-br',
+            toolbar: {
+                items: [
+                    'undo','redo','|',
+                    'heading','|',
+                    'bold','italic','underline','link','|',
+                    'bulletedList','numberedList','blockQuote','|',
+                    'insertTable','|',
+                    'alignment','outdent','indent','|',
+                    'codeBlock','horizontalLine'
+                ]
+            },
+            table: {
+                contentToolbar: [
+                    'tableColumn', 'tableRow', 'mergeTableCells',
+                    'tableProperties', 'tableCellProperties'
+                ]
+            },
+            // Sem upload de imagem por enquanto (pode habilitar depois)
+            removePlugins: ['CKBox','CKFinder','EasyImage']
+        }).catch(err => console.error(err));
+    });
+
+    window.ckEditors = new WeakMap();
+
+    const ckOptions = {
+        language: 'pt-br',
+        toolbar: {
+            items: [
+                'undo','redo','|',
+                'heading','|',
+                'bold','italic','underline','link','|',
+                'bulletedList','numberedList','blockQuote','|',
+                'insertTable','|',
+                'alignment','outdent','indent','|',
+                'codeBlock','horizontalLine'
+            ]
+        },
+        table: {
+            contentToolbar: [
+                'tableColumn','tableRow','mergeTableCells',
+                'tableProperties','tableCellProperties'
+            ]
+        },
+        removePlugins: ['CKBox','CKFinder','EasyImage']
+    };
+
+    function initCKEditor(el){
+        if(!el || window.ckEditors.has(el)) return;
+        ClassicEditor.create(el, ckOptions)
+            .then(instance => window.ckEditors.set(el, instance))
+            .catch(console.error);
+    }
+
+    function destroyCKEditor(el){
+        const inst = window.ckEditors.get(el);
+        if(inst){
+            inst.destroy().catch(()=>{});
+            window.ckEditors.delete(el);
+        }
+    }
+
+    // Inicializa os existentes na página
+    document.querySelectorAll('textarea.js-ckeditor').forEach(initCKEditor);
+
+    // Se você adiciona/remova aulas via JS, chame isso após inserir o bloco:
+    //   initCKEditor(novoBloco.querySelector('textarea.js-ckeditor'));
+
+    // Se preferir automático para elementos adicionados dinamicamente:
+    const obs = new MutationObserver((mutations)=>{
+        mutations.forEach(m=>{
+            m.addedNodes.forEach(node=>{
+                if(node.nodeType===1){
+                    if(node.matches('textarea.js-ckeditor')) initCKEditor(node);
+                    node.querySelectorAll?.('textarea.js-ckeditor').forEach(initCKEditor);
+                }
+            });
+            m.removedNodes.forEach(node=>{
+                if(node.nodeType===1){
+                    if(node.matches('textarea.js-ckeditor')) destroyCKEditor(node);
+                    node.querySelectorAll?.('textarea.js-ckeditor').forEach(destroyCKEditor);
+                }
+            });
+        });
+    });
+    obs.observe(document.body, {childList:true, subtree:true});
+
+    // (opcional) garante sincronização antes de submeter
+    document.querySelector('form')?.addEventListener('submit', ()=>{
+        document.querySelectorAll('textarea.js-ckeditor').forEach(el=>{
+            const inst = window.ckEditors.get(el);
+            if(inst) inst.updateSourceElement();
+        });
+    });
 </script>
 
 {{--@endsection--}}

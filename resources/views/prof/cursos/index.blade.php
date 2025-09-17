@@ -51,9 +51,14 @@
                 @foreach($cursos as $curso)
                     <div class="curso-card rounded-xl border bg-white shadow-sm overflow-hidden"
                          data-title="{{ Str::lower($curso->titulo) }}">
-                        <div class="h-32 bg-slate-100"
-                             style="background-image:url('{{ $curso->capa_path ? asset("storage/".$curso->capa_path) : "" }}');
-                      background-size:cover;background-position:center"></div>
+                        <div class="h-32 bg-slate-100 overflow-hidden">
+                            <img
+                                src="{{ $curso->imagem_capa_url }}"
+                                alt="Capa do curso {{ $curso->titulo }}"
+                                class="w-full h-full object-cover"
+                                loading="lazy" decoding="async"
+                            >
+                        </div>
 
                         <div class="p-4">
                             <div class="flex items-start justify-between gap-2">

@@ -1,6 +1,16 @@
 @extends('layouts.app')
 @section('title', $curso->titulo)
 
+@section('head')
+    <style>
+        /* remove o marcador padrão e gira a setinha quando aberto */
+        [data-acc] summary { list-style: none; }
+        [data-acc] summary::-webkit-details-marker { display: none; }
+        details[open] .acc-arrow { transform: rotate(180deg); }
+    </style>
+@endsection
+
+
 @section('content')
     <section class="mx-auto container-page px-4 py-8">
 
@@ -47,28 +57,32 @@
                     </div>
 
                     {{-- Módulos/Aulas --}}
+                    {{-- Módulos/Aulas (versão simples, sem JS) --}}
                     <div class="p-4">
                         <h3 class="font-semibold mb-2">Módulos do Curso</h3>
 
                         <div class="space-y-3">
                             @forelse($curso->modulos->sortBy('ordem') as $m)
-                                <div class="rounded-lg border">
-                                    <div class="flex items-center justify-between px-4 py-3">
-                                        <div>
+                                <details class="rounded-lg border bg-white" {{ $loop->first ? 'open' : '' }} data-acc>
+                                    <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-slate-50">
+                                        <div class="text-left">
                                             <div class="font-medium">Módulo {{ $loop->iteration }}: {{ $m->titulo }}</div>
                                             @if($m->descricao)
                                                 <div class="text-xs text-slate-500">{{ $m->descricao }}</div>
                                             @endif
                                         </div>
-                                        <button class="text-slate-500 text-sm">
-                                            <span class="hidden md:inline">Ver aulas</span> ⌄
-                                        </button>
-                                    </div>
+                                        <span class="text-slate-500 text-sm inline-flex items-center gap-1">
+            <span>Ver aulas</span>
+            <svg class="w-4 h-4 acc-arrow transition-transform" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+            </svg>
+          </span>
+                                    </summary>
 
                                     @if($m->aulas->count())
                                         <div class="px-4 pb-3">
                                             @foreach($m->aulas->sortBy('ordem') as $a)
-                                                <div class="flex items-center justify-between rounded border p-3 mb-2 bg-white">
+                                                <div class="flex items-center justify-between rounded border p-3 mb-2 hover:bg-slate-50">
                                                     <div class="truncate">
                                                         <div class="text-sm">{{ $a->titulo }}</div>
                                                         @if($a->descricao)
@@ -80,12 +94,13 @@
                                             @endforeach
                                         </div>
                                     @endif
-                                </div>
+                                </details>
                             @empty
                                 <div class="text-sm text-slate-500">Este curso ainda não possui módulos.</div>
                             @endforelse
                         </div>
                     </div>
+
                 </div>
             </div>
 

@@ -4,15 +4,14 @@
 
 @section('content')
     {{-- Hero --}}
-
     <section class="bg-[url('https://images.unsplash.com/photo-1554200876-56c2f25224fa?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center">
-        <div class="bg-blue-900/80">
+        <div class="bg-[#3b4333]/80"> {{-- brand-900/80 --}}
             <div class="mx-auto container-page px-4 py-20 text-white">
                 <span class="inline-block text-xs bg-white/20 px-2 py-1 rounded">Mais de 50.000 alunos certificados</span>
                 <h1 class="mt-4 text-4xl md:text-5xl font-extrabold leading-tight">
-                    Transforme sua carreira com<br><span class="text-blue-300">cursos de qualidade</span>
+                    Transforme sua carreira com<br><span class="text-[#c1cab0]">cursos de qualidade</span> {{-- brand-300 --}}
                 </h1>
-                <p class="mt-4 max-w-2xl text-blue-100">Certificações reconhecidas pelo mercado, metodologia comprovada e suporte completo para seu desenvolvimento profissional.</p>
+                <p class="mt-4 max-w-2xl text-[#e9eee3]">Certificações reconhecidas pelo mercado, metodologia comprovada e suporte completo para seu desenvolvimento profissional.</p> {{-- brand-100 --}}
                 <div class="mt-6 flex gap-3">
                     <a href="{{ route('site.cursos') }}" class="btn btn-primary">Explorar Cursos</a>
                     <a href="#" class="btn btn-outline"><i class="ri-play-fill mr-1"></i> Assistir Demonstração</a>
@@ -43,7 +42,7 @@
         </div>
     </section>
 
-    {{-- Cursos.php Populares --}}
+    {{-- Cursos Populares --}}
     <section class="py-12">
         <div class="mx-auto container-page px-4">
             <h2 class="text-2xl font-bold text-center">Cursos Populares</h2>
@@ -51,29 +50,44 @@
 
             <div class="grid md:grid-cols-4 gap-4 mt-6">
                 @foreach ($populares as $curso)
-                    <div class="card overflow-hidden">
+                    <div class="card h-full flex flex-col overflow-hidden">
                         <div class="h-32 bg-slate-100 overflow-hidden">
                             <img src="{{ $curso->imagem_capa_url }}"
                                  alt="Capa do curso {{ $curso->titulo }}"
                                  class="w-full h-full object-cover">
                         </div>
-                        <div class="p-4 space-y-2">
+
+                        <div class="p-4 flex-1 flex flex-col gap-2">
                             <div class="flex items-center justify-between text-xs">
-                                <span class="badge border-blue-200 text-blue-700 bg-blue-50">{{ $curso->categoria->nome }}</span>
+                                {{-- badge com paleta --}}
+                                <span class="badge border-[#d5dcc9] text-[#606d50] bg-[#f5f7f2]">{{ $curso->categoria->nome }}</span> {{-- 200 / 700 / 50 --}}
                                 <span class="badge border-slate-200 text-slate-600 bg-slate-50">{{ $curso->nivel }}</span>
                             </div>
-                            <h3 class="font-semibold leading-snug">{{ $curso->titulo }}</h3>
+
+                            {{-- TÍTULO com clamp de 2 linhas + tooltip --}}
+                            <h3 class="font-semibold leading-snug line-clamp-2" title="{{ $curso->titulo }}">
+                                {{ $curso->titulo }}
+                            </h3>
+
                             <div class="text-xs text-slate-500 flex items-center gap-3">
-                                <span><i class="ri-time-line mr-1"></i> {{ $curso->carga_horaria }}h</span>
-                                <span><i class="ri-user-3-line mr-1"></i> {{ number_format($curso->alunos,0,'.','.') }} alunos</span>
+                                <span><i class="ri-time-line mr-1"></i> {{ $curso->carga_horaria_total }}h</span>
                             </div>
+
                             <div class="text-sm">
-                                @if($curso->preco_promocional)
-                                    <span class="line-through text-slate-400 mr-1">R$ {{ number_format($curso->preco,2,',','.') }}</span>
+                                @if($curso->preco_original)
+                                    <span class="line-through text-slate-400 mr-1">
+                                        R$ {{ number_format($curso->preco_original,2,',','.') }}
+                                    </span>
                                 @endif
-                                <span class="font-semibold text-blue-700">R$ {{ number_format($curso->preco_final,2,',','.') }}</span>
+                                <span class="font-semibold text-[#606d50]">
+                                    R$ {{ number_format($curso->preco,2,',','.') }}
+                                </span> {{-- brand-700 --}}
                             </div>
-                            <a href="{{ route('site.curso.detalhe',$curso->id) }}" class="btn btn-primary w-full">Ver Detalhes</a>
+
+                            <div class="mt-auto"></div>
+                            <a href="{{ route('site.curso.detalhe',$curso->id) }}" class="btn btn-primary w-full">
+                                Ver Detalhes
+                            </a>
                         </div>
                     </div>
                 @endforeach
@@ -85,33 +99,32 @@
         </div>
     </section>
 
-    {{-- Newsletter faixa azul --}}
-    <section class="bg-blue-700">
+    {{-- Newsletter (faixa) --}}
+    <section class="bg-[#606d50]"> {{-- brand-700 --}}
         <div class="mx-auto container-page px-4 py-10 text-white">
             <h3 class="text-2xl font-bold">Fique por dentro das novidades</h3>
-            <p class="text-blue-100">Receba em primeira mão informações sobre novos cursos e promoções.</p>
+            <p class="text-[#e9eee3]">Receba em primeira mão informações sobre novos cursos e promoções.</p> {{-- brand-100 --}}
             <div class="mt-3 flex gap-2">
                 <input type="email" class="w-full md:w-80 px-3 py-2 rounded bg-white text-slate-800" placeholder="Digite seu e-mail">
-                <button class="btn btn-primary bg-white text-blue-700 hover:bg-slate-100">Inscrever-se</button>
+                <button class="btn btn-primary bg-white text-[#606d50] hover:bg-slate-100">Inscrever-se</button> {{-- texto brand-700 --}}
             </div>
         </div>
     </section>
-
 
     @php
         $miniCart = collect(session('cart', []));
         $miniTotal = $miniCart->sum('preco');
     @endphp
 
-    {{-- MINI-CARRINHO: botão flutuante + painel --}}
+    {{-- MINI-CARRINHO --}}
     <button id="miniCartToggle"
             class="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 px-3 py-2 rounded-full shadow border bg-white hover:bg-slate-50">
         <span>🛒</span>
         <span>Carrinho</span>
         <span data-cart-badge
-              class="min-w-[20px] h-5 px-1 rounded-full bg-blue-600 text-white text-[11px] grid place-items-center {{ $miniCart->isEmpty() ? 'hidden' : '' }}">
-    {{ $miniCart->count() }}
-  </span>
+              class="min-w-[20px] h-5 px-1 rounded-full bg-[#778663] text-white text-[11px] grid place-items-center {{ $miniCart->isEmpty() ? 'hidden' : '' }}">
+            {{ $miniCart->count() }}
+        </span> {{-- brand-600 --}}
     </button>
 
     <div id="miniCartPanel"
@@ -132,10 +145,10 @@
                                 <div class="text-sm font-medium truncate max-w-[180px]">{{ $it['titulo'] }}</div>
                                 <div class="text-xs text-slate-500">R$ {{ number_format($it['preco'] ?? 0,2,',','.') }}</div>
                             </div>
-
                             <div class="flex items-center gap-2">
                                 <form method="post" action="{{ route('checkout.cart.remove', $it['id']) }}">
                                     @csrf
+                                    @method('DELETE')
                                     <button class="text-xs text-red-600 hover:underline">remover</button>
                                 </form>
                             </div>
@@ -162,7 +175,6 @@
             const panel = document.getElementById('miniCartPanel');
             btn?.addEventListener('click', ()=> panel.classList.toggle('hidden'));
 
-            // Atualização do BADGE em tempo real (reaproveita o endpoint JSON existente)
             async function refreshCartBadge() {
                 try {
                     const res = await fetch("{{ route('checkout.cart.count') }}", { headers: {'Accept':'application/json'}, cache: 'no-store' });
@@ -174,12 +186,7 @@
                     });
                 } catch(e){}
             }
-            // chama ao carregar a página
             refreshCartBadge();
-
-            // (opcional) revalida a cada 15s
-            // setInterval(refreshCartBadge, 15000);
         })();
     </script>
-
 @endsection

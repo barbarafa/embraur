@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Aluno;
 
 use App\Http\Controllers\Controller;
-use App\Models\{Cursos, Matriculas, Modulos, Aulas, QuizTentativa};
+use App\Models\{Certificados, Cursos, Matriculas, Modulos, Aulas, QuizTentativa};
 use Illuminate\Http\Request;
 
 class CursoConteudoController extends Controller
@@ -62,6 +62,10 @@ class CursoConteudoController extends Controller
                 ->map->first();
         }
 
+
+        $certificado = $certificado ?? Certificados::where('matricula_id', $matricula->id)
+            ->latest('data_emissao')->first();
+
         return view('aluno.curso-conteudo', [
             'curso'                  => $curso,
             'matricula'              => $matricula,
@@ -71,6 +75,7 @@ class CursoConteudoController extends Controller
             'nextAula'               => $nextAula,
             'modIndex'               => $modIndex,
             'ultimaTentativaPorQuiz' => $ultimaTentativaPorQuiz,
+            'certificado'           => $certificado,
         ]);
     }
 }

@@ -8,6 +8,7 @@
     {{-- mantém o seu vite (se já estiver ok, segue usando) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- fallback SEM instalar nada: deixa tudo bonito mesmo se o vite não carregar --}}
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -18,6 +19,7 @@
         .btn-soft{background:#f1f5f9;color:#0f172a}.btn-soft:hover{background:#e2e8f0}
     </style>
 </head>
+@stack('scripts')
 <body class="bg-slate-50 text-slate-800">
 {{-- Header ÚNICO --}}
 <header class="bg-white border-b">

@@ -6,38 +6,38 @@ use Illuminate\Database\Eloquent\Model;
 
 class Certificados extends Model
 {
-    use HasFactory;
 
     protected $table = 'certificados';
 
     protected $fillable = [
         'matricula_id',
-        'codigo_validacao',
+        'codigo_verificacao',
+        'url_certificado',
+        'qr_code_url',
         'data_emissao',
-        'arquivo_pdf',
-        'horas_cursadas',
-        'ativo'
+        'valido'
     ];
+
+    public $timestamps = false;
 
     protected $casts = [
         'data_emissao' => 'datetime',
-        'ativo' => 'boolean',
-        'horas_cursadas' => 'integer'
+        'valido' => 'boolean',
     ];
 
     // Relacionamentos
     public function matricula()
     {
-        return $this->belongsTo(Matricula::class);
+        return $this->belongsTo(Matriculas::class);
     }
 
     public function user()
     {
-        return $this->hasOneThrough(User::class, Matricula::class, 'id', 'id', 'matricula_id', 'user_id');
+        return $this->hasOneThrough(User::class, Matriculas::class, 'id', 'id', 'matricula_id', 'user_id');
     }
 
     public function curso()
     {
-        return $this->hasOneThrough(Cursos::class, Matricula::class, 'id', 'id', 'matricula_id', 'curso_id');
+        return $this->hasOneThrough(Cursos::class, Matriculas::class, 'id', 'id', 'matricula_id', 'curso_id');
     }
 }

@@ -20,7 +20,7 @@ use App\Http\Controllers\AulaProgressoController;
 use App\Http\Controllers\CheckoutController;
 
 // ===== PROFESSOR
-use App\Http\Controllers\Auth\ProfessorAuthController;
+
 use App\Http\Controllers\Professor\ProfessorDashboardController;
 use App\Http\Controllers\Professor\CursoAdminController;
 use App\Http\Controllers\Professor\CursoMediaController;
@@ -38,17 +38,18 @@ use App\Http\Controllers\Professor\QuizController as ProfessorQuizController;
 */
 Route::get('/', [HomeController::class, 'index'])->name('site.home');
 Route::get('/catalogo', [CursoController::class, 'index'])->name('site.cursos');
+
 Route::get('/curso/{id}', [CursoController::class, 'show'])->name('site.curso.detalhe');
 
 
-Route::middleware('aluno.auth') // garanta que usa o guard/cookie do aluno
-->group(function () {
-    Route::get('/checkout/{curso}', [CheckoutController::class, 'start'])->name('checkout.start');
-
+Route::middleware('aluno.auth')->group(function () {
+    Route::get('/checkout/{curso}', [CheckoutController::class, 'start'])
+        ->name('checkout.start')
+        ->whereNumber('curso'); // <<< só números; não pega "retorno"
     // Checkout do carrinho (vários cursos)
-    Route::post('/checkout/start-cart',       [CheckoutController::class, 'startCart'])->name('checkout.start.cart');
-
+    Route::post('/checkout/start-cart',[CheckoutController::class, 'startCart'])->name('checkout.start.cart');
 });
+
 
 
 Route::get('/carrinho',                   [CheckoutController::class, 'cart'])->name('checkout.cart');
@@ -57,11 +58,12 @@ Route::delete('/carrinho/remove/{curso}', [CheckoutController::class, 'remove'])
 Route::get('/carrinho/count',             [CheckoutController::class, 'count'])->name('checkout.cart.count');
 
 
+
 // Retornos do Mercado Pago
-Route::get('/checkout/retorno',           [CheckoutController::class, 'retorno'])->name('checkout.retorno');
-Route::get('/checkout/sucesso',           [CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/falha',             [CheckoutController::class, 'failure'])->name('checkout.failure');
-Route::get('/checkout/pendente',          [CheckoutController::class, 'pending'])->name('checkout.pending');
+Route::get('/checkout/retorno',[CheckoutController::class, 'retorno'])->name('checkout.retorno');
+Route::get('/checkout/webhook',[CheckoutController::class, 'webhook'])->name('checkout.webhook');
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -86,6 +88,8 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
 
         Route::get('cursos', [StudentCoursesController::class, 'index'])->name('cursos');
         Route::get('certificados', [StudentCertificatesController::class, 'index'])->name('certificados');
+        Route::post('curso/{curso}/certificado', [StudentCertificatesController::class, 'issue'])
+            ->name('curso.certificado.emitir');
         Route::get('pagamentos', [StudentPaymentsController::class, 'index'])->name('pagamentos');
         Route::get('perfil', [StudentProfileController::class, 'index'])->name('perfil');
 
@@ -106,7 +110,7 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
          */
         Route::get('aulas/{aula}/progresso', [AulaProgressoController::class, 'show'])->name('aula.progresso.show');
         Route::post('aulas/{aula}/progresso', [AulaProgressoController::class, 'store'])->name('aula.progresso.store');
-
+        Route::get('certificados/verificar/{codigo}', [StudentCertificatesController::class,'verify'])->name('certificados.verify');
         /**
          * QUIZ (prova do módulo)
          */
@@ -123,18 +127,6 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
         Route::get('cursos/{curso}/quiz/{quiz}/refazer', [AlunoQuizController::class, 'refazer'])
             ->name('quiz.refazer');
 
-
-        /**
-         * Carrinho/Checkout
-         */
-        Route::post('carrinho/add/{curso}', [CheckoutController::class, 'add'])->name('carrinho.add');
-        Route::post('carrinho/remove/{curso}', [CheckoutController::class, 'remove'])->name('carrinho.remove');
-        Route::get('carrinho', [CheckoutController::class, 'cart'])->name('carrinho');
-
-        Route::post('checkout', [CheckoutController::class, 'checkout'])->name('checkout');
-        Route::get('checkout/sucesso', [CheckoutController::class, 'success'])->name('checkout.sucesso');
-        Route::get('checkout/falha', [CheckoutController::class, 'failure'])->name('checkout.falha');
-        Route::get('checkout/pendente', [CheckoutController::class, 'pending'])->name('checkout.pendente');
     });
 });
 
