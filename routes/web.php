@@ -90,6 +90,18 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
         Route::get('certificados', [StudentCertificatesController::class, 'index'])->name('certificados');
         Route::post('curso/{curso}/certificado', [StudentCertificatesController::class, 'issue'])
             ->name('curso.certificado.emitir');
+        // Visualizar (abre no navegador)
+        Route::get('/certificados/{cert}/visualizar', [StudentCertificatesController::class, 'visualizar'])
+            ->name('certificados.visualizar');
+
+        // Download (baixa o PDF)
+        Route::get('/certificados/{cert}/download', [StudentCertificatesController::class, 'download'])
+            ->name('certificados.download');
+
+        Route::post('/aluno/cursos/{curso}/certificado/baixar',
+            [StudentCertificatesController::class, 'baixarFPDF']
+        )->name('curso.certificado.baixar');
+
         Route::get('pagamentos', [StudentPaymentsController::class, 'index'])->name('pagamentos');
         Route::get('perfil', [StudentProfileController::class, 'index'])->name('perfil');
 

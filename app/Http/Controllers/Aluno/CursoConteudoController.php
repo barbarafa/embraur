@@ -50,11 +50,13 @@ class CursoConteudoController extends Controller
         $prevAula = $idx > 0 ? $aulasOrdenadas[$idx - 1] : null;
         $nextAula = $idx < ($aulasOrdenadas->count() - 1) ? $aulasOrdenadas[$idx + 1] : null;
 
+        $modsSorted = $curso->modulos->sortBy(fn($m) => [$m->ordem ?? 999999, $m->id])->values();
+        $modIndex   = $modsSorted->search(fn($m) => (int)$m->id === (int)$moduloAtual->id);
         // Status das provas por módulo
         $quizIds = $curso->modulos->pluck('quiz.id')->filter()->values();
         $ultimaTentativaPorQuiz = collect();
         if ($quizIds->isNotEmpty()) {
-            $ultimaTentativaPorQuiz = QuizTentativa::where('aluno_id', $alunoId)
+            $ultimaTentativaPorQuiz = QuizTentativa::where('matricula_id', $matricula->id)
                 ->whereIn('quiz_id', $quizIds)
                 ->orderByDesc('id')
                 ->get()

@@ -240,10 +240,16 @@
                         </div>
 
                         @if($certificado)
-                            <a href="{{ $certificado->url_certificado ?? route('aluno.curso.certificado.emitir', $curso->id) }}"
-                               class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap">
-                                Baixar PDF
-                            </a>
+
+
+                            <form method="POST"
+                                  action="{{ route('aluno.curso.certificado.baixar', [$curso->id, 'certificado' => $certificado->id]) }}">
+                                @csrf
+                                <button type="submit"
+                                        class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 whitespace-nowrap">
+                                    Baixar PDF
+                                </button>
+                            </form>
                         @else
                             <form method="POST" action="{{ route('aluno.curso.certificado.emitir', $curso->id) }}">
                                 @csrf

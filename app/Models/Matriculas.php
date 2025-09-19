@@ -36,6 +36,11 @@ class Matriculas extends Model
         return $this->belongsTo(Cursos::class, 'curso_id'); // troque para Curso::class se o model for singular
     }
 
+    public function certificado()
+    {
+        return $this->hasMany(Certificados::class, 'matricula_id'); // troque para Curso::class se o model for singular
+    }
+
     // progresso_aulas.matricula_id -> matriculas.id
     public function progressoAulas()
     {

@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->integer('carga_horaria_total')->default(0); // minutos
             $table->decimal('preco', 10, 2)->nullable();
             $table->decimal('preco_original', 10, 2)->nullable();
-            $table->decimal('nota_minima_aprovacao', 5, 2)->default(0);
+            $table->decimal('nota_minima_aprovacao', 5, 2)->default(7);
             $table->integer('validade_dias')->nullable();
             $table->enum('status', ['rascunho', 'publicado', 'arquivado'])->default('rascunho');
             $table->timestamp('data_criacao')->useCurrent();

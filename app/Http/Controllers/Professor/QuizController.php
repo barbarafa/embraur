@@ -48,13 +48,25 @@ class QuizController extends Controller
      * ========================= */
     public function create(Request $r)
     {
-        $curso   = Cursos::findOrFail($r->query('curso'));
-        $modulo  = Modulos::findOrFail($r->query('modulo'));
+        $curso  = Cursos::findOrFail($r->query('curso'));
+        $modulo = Modulos::where('curso_id', $curso->id)->findOrFail($r->query('modulo'));
 
-        abort_unless((int)$modulo->curso_id === (int)$curso->id, 404);
+        // pega o quiz desse módulo já com as questões (e opções, se quiser)
+        $quiz = $modulo->quiz()->with('questoes.opcoes')->get();
 
-        return view('prof.quizzes.create', compact('curso', 'modulo'));
+        if(empty($quiz->questoes)){
+            $questoes = collect();
+        }else{
+            $questoes = $quiz->questoes;
+        }
+
+
+
+
+        return view('prof.quizzes.create', compact('curso','modulo','quiz','questoes'));
     }
+
+
 
     public function store(Request $r)
     {

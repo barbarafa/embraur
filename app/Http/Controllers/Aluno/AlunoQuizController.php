@@ -127,6 +127,10 @@ class AlunoQuizController extends Controller
             ]);
         });
 
+        // Dentro do método submit() DEPOIS de salvar a tentativa ($tent)
+        app(\App\Services\CourseCompletionService::class)->recalculateCertification($matricula);
+
+
         // redireciona para a tela de resultado
         return redirect()
             ->route('aluno.quiz.result', [$curso->id, $quiz->id, $tentativa->id]);

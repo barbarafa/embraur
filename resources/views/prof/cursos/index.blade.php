@@ -85,7 +85,7 @@
 
                             <div class="mt-3 flex items-center gap-2">
                                 <a href="{{ route('prof.cursos.edit',$curso) }}" class="btn btn-soft">Editar</a>
-                                <a href="{{ route('prof.cursos.modulos.index',$curso) }}" class="btn btn-outline">Módulos</a>
+{{--                                <a href="{{ route('prof.cursos.modulos.index',$curso) }}" class="btn btn-outline">Módulos</a>--}}
                                 <form method="POST" action="{{ route('prof.cursos.destroy',$curso) }}"
                                       onsubmit="return confirm('Remover curso \"{{ $curso->titulo }}\"?')"
                                 class="ml-auto">
