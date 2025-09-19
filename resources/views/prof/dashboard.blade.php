@@ -17,8 +17,6 @@
                     <span class="text-lg">＋</span>
                     Criar Curso
                 </a>
-                <button class="btn btn-outline h-10 px-3 rounded-md">⚙️</button>
-                <button class="btn btn-outline h-10 px-3 rounded-md">🔔</button>
             </div>
         </div>
 
@@ -63,25 +61,33 @@
                 <h3 class="text-lg font-semibold">Atividade dos Alunos</h3>
                 <p class="text-xs text-slate-500 mb-3">Progresso recente dos seus alunos</p>
 
-                @foreach($atividade as $item)
-                    <div class="rounded-lg border p-3 mb-3">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="font-medium">{{ $item['nome'] }}</div>
-                                <div class="text-xs text-slate-500">{{ $item['curso'] }}</div>
+                {{-- SCROLL SÓ NESTE CARD --}}
+                <div id="atividade-scroll" class="max-h-[520px] overflow-auto pr-2">
+                    @foreach($atividade as $item)
+                        <div class="rounded-lg border p-3 mb-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium">{{ $item['nome'] }}</div>
+                                    <div class="text-xs text-slate-500">{{ $item['curso'] }}</div>
+                                </div>
+                                <div class="text-xs">
+                                    <span class="px-2 py-1 rounded bg-blue-600 text-white">{{ $item['situacao'] }}</span>
+                                    <span class="text-slate-500 ml-2">{{ $item['quando'] }}</span>
+                                </div>
                             </div>
-                            <div class="text-xs">
-                                <span class="px-2 py-1 rounded bg-blue-600 text-white">{{ $item['situacao'] }}</span>
-                                <span class="text-slate-500 ml-2">{{ $item['quando'] }}</span>
-                            </div>
-                        </div>
 
-                        <div class="mt-2 w-full bg-gray-100 h-2 rounded">
-                            <div class="bg-blue-600 h-2 rounded" style="width: {{ $item['percent'] }}%"></div>
+                            <div class="mt-2 w-full bg-gray-100 h-2 rounded">
+                                <div class="bg-blue-600 h-2 rounded" style="width: {{ $item['percent'] }}%"></div>
+                            </div>
+                            <div class="text-xs text-slate-500 mt-1">{{ $item['percent'] }}%</div>
                         </div>
-                        <div class="text-xs text-slate-500 mt-1">{{ $item['percent'] }}%</div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
+
+                {{-- paginação SÓ do card de atividade --}}
+                <div class="mt-3">
+                    {{ $atividade->withQueryString()->links() }}
+                </div>
             </div>
         </div>
     </div>

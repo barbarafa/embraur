@@ -14,7 +14,7 @@
                 <p class="mt-4 max-w-2xl text-[#e9eee3]">Certificações reconhecidas pelo mercado, metodologia comprovada e suporte completo para seu desenvolvimento profissional.</p> {{-- brand-100 --}}
                 <div class="mt-6 flex gap-3">
                     <a href="{{ route('site.cursos') }}" class="btn btn-primary">Explorar Cursos</a>
-                    <a href="#" class="btn btn-outline"><i class="ri-play-fill mr-1"></i> Assistir Demonstração</a>
+
                 </div>
             </div>
         </div>
@@ -99,17 +99,126 @@
         </div>
     </section>
 
-    {{-- Newsletter (faixa) --}}
-    <section class="bg-[#606d50]"> {{-- brand-700 --}}
-        <div class="mx-auto container-page px-4 py-10 text-white">
-            <h3 class="text-2xl font-bold">Fique por dentro das novidades</h3>
-            <p class="text-[#e9eee3]">Receba em primeira mão informações sobre novos cursos e promoções.</p> {{-- brand-100 --}}
-            <div class="mt-3 flex gap-2">
-                <input type="email" class="w-full md:w-80 px-3 py-2 rounded bg-white text-slate-800" placeholder="Digite seu e-mail">
-                <button class="btn btn-primary bg-white text-[#606d50] hover:bg-slate-100">Inscrever-se</button> {{-- texto brand-700 --}}
+    {{-- Parceiros (dinâmico) --}}
+    <section class="bg-white">
+        <div class="mx-auto container-page px-4 py-12">
+            <h2 class="text-2xl font-bold text-center">Empresas que confiam no nosso trabalho</h2>
+
+            @if($parceiros->isEmpty())
+                <p class="text-center text-slate-500 mt-4">Em breve novos parceiros por aqui.</p>
+            @else
+                <div class="mt-6 relative overflow-hidden">
+                    <div class="parceiros-track flex items-center gap-12 will-change-transform"
+                         style="animation-duration: {{ max(18, 6 + $parceiros->count()*3) }}s">
+                        {{-- Linha A --}}
+                        <div class="parceiros-row flex items-center gap-12 shrink-0">
+                            @foreach ($parceiros as $p)
+                                @php $src = asset('storage/images/parceiros/'.$p['logo']); @endphp
+                                @if(!empty($p['url']))
+                                    <a href="{{ $p['url'] }}" target="_blank" rel="noopener" class="block opacity-90 hover:opacity-100">
+                                        <img src="{{ $src }}" alt="{{ $p['alt'] ?? 'Parceiro' }}" class="h-12 object-contain" loading="lazy">
+                                    </a>
+                                @else
+                                    <img src="{{ $src }}" alt="{{ $p['alt'] ?? 'Parceiro' }}" class="h-12 object-contain" loading="lazy">
+                                @endif
+                            @endforeach
+                        </div>
+
+                        {{-- Linha B (duplicada) --}}
+                        <div class="parceiros-row flex items-center gap-12 shrink-0">
+                            @foreach ($parceiros as $p)
+                                @php $src = asset('storage/images/parceiros/'.$p['logo']); @endphp
+                                @if(!empty($p['url']))
+                                    <a href="{{ $p['url'] }}" target="_blank" rel="noopener" class="block opacity-90 hover:opacity-100">
+                                        <img src="{{ $src }}" alt="{{ $p['alt'] ?? 'Parceiro' }}" class="h-12 object-contain" loading="lazy">
+                                    </a>
+                                @else
+                                    <img src="{{ $src }}" alt="{{ $p['alt'] ?? 'Parceiro' }}" class="h-12 object-contain" loading="lazy">
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Pontinhos decorativos (opcional) --}}
+                <div class="flex justify-center mt-6 gap-2">
+                    @for($i=0; $i<5; $i++)
+                        <span class="w-2 h-2 rounded-full bg-slate-300 inline-block"></span>
+                    @endfor
+                </div>
+            @endif
+        </div>
+    </section>
+
+    {{-- SOBRE --}}
+    <section id="sobre" class="bg-[#f5f7f2]">
+        <div class="mx-auto container-page px-4 py-12 grid md:grid-cols-2 gap-8 items-center">
+            <div>
+                <h2 class="text-2xl font-bold">Sobre</h2>
+                <p class="mt-3 text-slate-700">
+                    Cursos em segurança do trabalho.
+                    Somos uma plataforma especializada em cursos de capacitação voltados para a área de Segurança do Trabalho,
+                    com foco nas principais Normas Regulamentadoras exigidas pelo Ministério do Trabalho.
+                    Conteúdo atualizado, didático e certificado para garantir a qualificação e segurança dos profissionais.
+                </p>
+
+                <h3 class="mt-6 font-semibold">Nossos principais cursos</h3>
+                <ul class="mt-2 space-y-2 text-slate-700">
+                    <li><span class="font-medium">NR 10 – Segurança em Instalações e Serviços com Eletricidade:</span>
+                        capacita profissionais para atuarem com segurança em instalações elétricas.</li>
+                    <li><span class="font-medium">NR 10 SEP – Sistema Elétrico de Potência:</span>
+                        complementar ao NR 10 para quem trabalha diretamente em SEP e suas proximidades.</li>
+                    <li><span class="font-medium">NR 35 – Trabalho em Altura:</span>
+                        técnicas e procedimentos seguros para atividades acima de 2 metros.</li>
+                </ul>
+            </div>
+
+            <div class="rounded-xl overflow-hidden shadow border bg-white p-6">
+                <img src="https://images.unsplash.com/photo-1516826957135-700dedea698c?q=80&w=1600&auto=format&fit=crop"
+                     alt="Treinamento de segurança do trabalho" class="w-full h-56 object-cover rounded-lg">
+                <div class="mt-4 text-sm text-slate-600">
+                    Certificados reconhecidos • Conteúdo atualizado • Acesso 24/7
+                </div>
             </div>
         </div>
     </section>
+
+    {{-- CONTATO --}}
+    <section id="contato" class="bg-white">
+        <div class="mx-auto container-page px-4 py-12">
+            <h2 class="text-2xl font-bold text-center">Fale Conosco</h2>
+            <p class="text-center text-slate-600 mt-1">Tire suas dúvidas e fale com nosso time.</p>
+
+            <div class="mt-8 grid md:grid-cols-3 gap-6">
+                <div class="card p-6">
+                    <div class="text-sm text-slate-500">WhatsApp</div>
+                    <a href="https://wa.me/5548920007132?text=Olá!%20Preciso%20de%20suporte%20no%20site%20Embraur."
+                       target="_blank" rel="noopener"
+                       class="mt-1 block font-semibold text-[#606d50] hover:underline">
+                        (48) 92000-7132
+                    </a>
+                </div>
+
+                <div class="card p-6">
+                    <div class="text-sm text-slate-500">E-mail</div>
+                    <a href="mailto:embraur@embraur.com" class="mt-1 block font-semibold text-[#606d50] hover:underline">
+                        embraur@embraur.com
+                    </a>
+                </div>
+
+                <div class="card p-6">
+                    <div class="text-sm text-slate-500">Redes Sociais</div>
+                    <a href="https://instagram.com/seu_perfil" target="_blank" rel="noopener"
+                       class="mt-1 inline-flex items-center gap-2 font-semibold text-[#606d50] hover:underline">
+                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm11 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 .002 6.002A3 3 0 0 0 12 9Z"/></svg>
+                        Instagram
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
 
     @php
         $miniCart = collect(session('cart', []));
@@ -190,3 +299,17 @@
         })();
     </script>
 @endsection
+
+<style>
+    @keyframes parceiros-scroll {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .parceiros-track{
+        width: max-content;
+        animation-name: parceiros-scroll;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+    }
+    .parceiros-track:hover{ animation-play-state: paused; }
+</style>

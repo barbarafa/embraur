@@ -44,6 +44,11 @@ class User extends Model implements Authenticatable
         }
     }
 
+    public function getNameAttribute()
+    {
+        return $this->nome_completo;
+    }
+
     // Perfis
     public function perfilAluno()     { return $this->hasOne(PerfilAluno::class, 'usuario_id'); }
     public function perfilProfessor() { return $this->hasOne(PerfilProfessor::class, 'usuario_id'); }

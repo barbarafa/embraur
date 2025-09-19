@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuizTentativa extends Model
 {
-    use HasFactory;
 
     protected $table = 'quiz_tentativas';
     public $timestamps = false;

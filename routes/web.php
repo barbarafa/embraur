@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Professor\ProfRelatorioController;
+use App\Http\Controllers\ProfRelatoriosController;
 use Illuminate\Support\Facades\Route;
 
 // Site (público)
@@ -213,5 +215,11 @@ Route::prefix('prof')->name('prof.')->group(function () {
         Route::post('quizzes',            [ProfessorQuizController::class, 'store'])->name('quizzes.store');
         Route::get('quizzes/{quiz}/edit', [ProfessorQuizController::class, 'edit'])->name('quizzes.edit');
         Route::put('quizzes/{quiz}',      [ProfessorQuizController::class, 'update'])->name('quizzes.update');
+
+        //relatorios
+        Route::get('/relatorios',                [ProfRelatorioController::class, 'index'])->name('relatorios.index');
+        Route::get('/relatorios/alunos',         [ProfRelatorioController::class, 'alunos'])->name('relatorios.alunos');
+        Route::get('/relatorios/pedidos',        [ProfRelatorioController::class, 'pedidos'])->name('relatorios.pedidos');
+        Route::get('/relatorios/cursos',         [ProfRelatorioController::class, 'cursos'])->name('relatorios.cursos');
     });
 });

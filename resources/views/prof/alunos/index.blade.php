@@ -16,7 +16,6 @@
                    class="btn-primary rounded-md h-10 px-4 flex items-center gap-2">
                     <span class="text-lg">+</span> Criar Curso
                 </a>
-                <button class="h-10 w-10 grid place-items-center rounded-md border hover:bg-gray-50">⚙️</button>
             </div>
         </div>
 

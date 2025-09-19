@@ -19,6 +19,8 @@
     </a>
 
 
-    {{-- Relatórios (desativado por enquanto) --}}
-    <span class="px-4 py-2 rounded-lg text-gray-400 cursor-default">Relatórios</span>
+    <a href="{{ route('prof.relatorios.index') }}"
+       class="px-4 py-2 rounded-lg {{ ($active ?? '')==='relatorios' ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
+        Relatórios
+    </a>
 </div>

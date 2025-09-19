@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 
 class Pedido extends Model
@@ -42,5 +43,34 @@ class Pedido extends Model
     {
         $total = $this->itens()->sum('subtotal');
         $this->update(['valor_total' => $total]);
+    }
+
+
+    /** Receita total (itens de cursos do professor) apenas com pedidos pagos */
+    public static function receitaTotalProfessor(int $profId): float
+    {
+        return (float) DB::table('pedidos as p')
+            ->join('itens_pedido as ip','ip.pedido_id','=','p.id')
+            ->join('cursos as c','c.id','=','ip.curso_id')
+            ->where('c.professor_id',$profId)
+            ->where('p.status','pago')
+            ->sum('ip.subtotal');
+    }
+
+    /** Receita do mês corrente (com base em data_pagamento, senão data_pedido) */
+    public static function receitaMesProfessor(int $profId): float
+    {
+        [$ini, $fim] = [now()->startOfMonth(), now()->endOfMonth()];
+
+        // Se houver data_pagamento, priorize-a; senão, usa data_pedido
+        $colData = DB::getSchemaBuilder()->hasColumn('pedidos','data_pagamento') ? 'p.data_pagamento' : 'p.data_pedido';
+
+        return (float) DB::table('pedidos as p')
+            ->join('itens_pedido as ip','ip.pedido_id','=','p.id')
+            ->join('cursos as c','c.id','=','ip.curso_id')
+            ->where('c.professor_id',$profId)
+            ->where('p.status','pago')
+            ->whereBetween($colData, [$ini, $fim])
+            ->sum('ip.subtotal');
     }
 }

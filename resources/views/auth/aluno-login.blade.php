@@ -42,15 +42,7 @@
                 Não tem uma conta? <a href="{{ route('aluno.register') }}" class="text-blue-700 hover:underline">Cadastre-se</a>
             </div>
 
-            <div class="border-t mt-5 pt-4 text-center">
-                <p class="text-sm text-slate-500 mb-2">Acesso Demo</p>
-                <form method="post" action="{{ route('aluno.login.do') }}">
-                    @csrf
-                    <input type="hidden" name="email" value="demo@eadpro.com">
-                    <input type="hidden" name="password" value="senha123">
-                    <button class="btn btn-outline w-full">Entrar como Demo</button>
-                </form>
-            </div>
+
         </div>
     </section>
 @endsection
