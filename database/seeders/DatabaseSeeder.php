@@ -20,7 +20,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             SstSeed::class,
-            QuizSeeder::class,
+           // QuizSeeder::class,
+            ProfessorUserSeeder::class
 
         ]);
     }

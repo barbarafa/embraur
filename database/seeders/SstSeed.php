@@ -133,122 +133,6 @@ class SstSeed extends Seeder
                         ],
                     ],
                 ],
-                [
-                    'categoria' => 'Saúde Ocupacional',
-                    'titulo'    => 'Higiene Ocupacional – Agentes Físicos e Químicos',
-                    'descricao_curta'    => 'Avaliação e controle de riscos ambientais',
-                    'descricao_completa' => 'Reconhecimento, avaliação e controle de agentes nocivos (ruído, vibração, poeiras e solventes). Programas e legislação.',
-                    'nivel'              => 'avancado',
-                    'preco'              => 149.90,
-                    'preco_original'     => 229.90,
-                    'nota_minima_aprovacao' => 7.0,
-                    'status'  => 'publicado',
-                    'modulos'=>[
-                        [
-                            'titulo'=>'Agentes Físicos',
-                            'descricao'=>'Ruído e vibração',
-                            'aulas'=>[
-                                ['titulo'=>'Ruído Ocupacional','descricao'=>null,'tipo'=>'video','duracao_minutos'=>16,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Vibração','descricao'=>null,'tipo'=>'texto','duracao_minutos'=>9,'conteudo_texto'=>'Parâmetros e limites de exposição','conteudo_url'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                        [
-                            'titulo'=>'Agentes Químicos',
-                            'descricao'=>'Poeiras e solventes',
-                            'aulas'=>[
-                                ['titulo'=>'Poeira e Aerodispersóides','descricao'=>null,'tipo'=>'video','duracao_minutos'=>15,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Solventes e Controle','descricao'=>null,'tipo'=>'texto','duracao_minutos'=>10,'conteudo_texto'=>'Medidas de controle e EPI','conteudo_url'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'categoria' => 'Ergonomia',
-                    'titulo'    => 'Ergonomia e Qualidade de Vida no Trabalho',
-                    'descricao_curta'    => 'Prevenção de LER/DORT e boas práticas ergonômicas',
-                    'descricao_completa' => 'Posturas, ajustes de postos de trabalho, pausas ativas e programas de qualidade de vida corporativa.',
-                    'nivel'              => 'iniciante',
-                    'preco'              => 79.90,
-                    'preco_original'     => 129.90,
-                    'nota_minima_aprovacao' => 7.0,
-                    'status'  => 'publicado',
-                    'modulos'=>[
-                        [
-                            'titulo'=>'Fundamentos de Ergonomia',
-                            'descricao'=>'Conceitos, posturas e riscos',
-                            'aulas'=>[
-                                ['titulo'=>'Introdução à Ergonomia','descricao'=>null,'tipo'=>'video','duracao_minutos'=>10,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Postura e Ajustes do Posto','descricao'=>null,'tipo'=>'texto','duracao_minutos'=>8,'conteudo_texto'=>'Checklists e recomendações','conteudo_url'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                        [
-                            'titulo'=>'Qualidade de Vida',
-                            'descricao'=>'Pausas e exercícios',
-                            'aulas'=>[
-                                ['titulo'=>'Pausas Ativas','descricao'=>null,'tipo'=>'video','duracao_minutos'=>9,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Alongamentos Simples','descricao'=>null,'tipo'=>'video','duracao_minutos'=>9,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'categoria' => 'EPI e EPC',
-                    'titulo'    => 'EPIs na Prática – Seleção, Uso e Manutenção',
-                    'descricao_curta'    => 'Como escolher e usar EPIs corretamente',
-                    'descricao_completa' => 'Critérios de seleção, certificações, treinamentos, higienização e manutenção preventiva.',
-                    'nivel'              => 'iniciante',
-                    'preco'              => 69.90,
-                    'preco_original'     => 119.90,
-                    'nota_minima_aprovacao' => 7.0,
-                    'status'  => 'publicado',
-                    'modulos'=>[
-                        [
-                            'titulo'=>'Seleção e Certificações',
-                            'descricao'=>'CA e adequação',
-                            'aulas'=>[
-                                ['titulo'=>'Certificado de Aprovação (CA)','descricao'=>null,'tipo'=>'texto','duracao_minutos'=>7,'conteudo_texto'=>'O que avaliar no CA','conteudo_url'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Critérios de Seleção','descricao'=>null,'tipo'=>'video','duracao_minutos'=>11,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                        [
-                            'titulo'=>'Uso e Manutenção',
-                            'descricao'=>'Higienização e guarda',
-                            'aulas'=>[
-                                ['titulo'=>'Uso Correto por Atividade','descricao'=>null,'tipo'=>'video','duracao_minutos'=>10,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Higienização e Vida Útil','descricao'=>null,'tipo'=>'texto','duracao_minutos'=>8,'conteudo_texto'=>'Boas práticas e registros','conteudo_url'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'categoria' => 'Gestão de Riscos',
-                    'titulo'    => 'Gestão de Riscos Ocupacionais (GRO) e PGR',
-                    'descricao_curta'    => 'Do mapeamento ao plano de ação',
-                    'descricao_completa' => 'Identificação de perigos, avaliação de riscos, hierarquia de controles e elaboração do PGR alinhado ao GRO.',
-                    'nivel'              => 'intermediario',
-                    'preco'              => 139.90,
-                    'preco_original'     => 219.90,
-                    'nota_minima_aprovacao' => 7.0,
-                    'status'  => 'publicado',
-                    'modulos'=>[
-                        [
-                            'titulo'=>'GRO na Prática',
-                            'descricao'=>'Perigos, riscos e controles',
-                            'aulas'=>[
-                                ['titulo'=>'Identificação de Perigos','descricao'=>null,'tipo'=>'video','duracao_minutos'=>12,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Avaliação e Hierarquia de Controles','descricao'=>null,'tipo'=>'texto','duracao_minutos'=>10,'conteudo_texto'=>'Exemplos de medidas','conteudo_url'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                        [
-                            'titulo'=>'PGR',
-                            'descricao'=>'Estrutura e monitoramento',
-                            'aulas'=>[
-                                ['titulo'=>'Elaboração do PGR','descricao'=>null,'tipo'=>'video','duracao_minutos'=>14,'conteudo_url'=>null,'conteudo_texto'=>null,'liberada_apos_anterior'=>false],
-                                ['titulo'=>'Acompanhamento e Revisões','descricao'=>null,'tipo'=>'texto','duracao_minutos'=>9,'conteudo_texto'=>'Indicadores e registros','conteudo_url'=>null,'liberada_apos_anterior'=>true],
-                            ],
-                        ],
-                    ],
-                ],
             ];
 
             // 3) Inserção dos cursos com módulos e aulas
@@ -271,7 +155,6 @@ class SstSeed extends Seeder
                     'preco_original'        => $cData['preco_original'],
                     'nota_minima_aprovacao' => $cData['nota_minima_aprovacao'],
                     'status'     => $cData['status']
-
                 ]);
 
                 $totalMin = 0;
