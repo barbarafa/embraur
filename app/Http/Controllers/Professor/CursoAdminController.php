@@ -10,6 +10,7 @@ use App\Models\Cursos;
 use App\Models\Modulos;
 use App\Models\Quiz;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -68,6 +69,10 @@ class CursoAdminController extends Controller
             'modulos.*.aulas.*.conteudo_url'       => ['nullable','string','max:255'],
             'modulos.*.aulas.*.conteudo_texto'     => ['nullable','string'],
             'modulos.*.aulas.*.liberada_apos_anterior' => ['nullable','boolean'],
+            'modulos.*.aulas.*.video_file' => ['nullable','file',
+                'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime',
+                'max:1024000' // ~1GB (em KB) – ajuste se quiser
+            ],
         ]);
 
         $dataCurso = collect($data)->only([
@@ -91,12 +96,12 @@ class CursoAdminController extends Controller
             $dataCurso['imagem_capa'] = $request->file('imagem_capa')->store('cursos/capas', 'public');
         }
 
-        DB::transaction(function () use (&$curso, $dataCurso, $data) {
+        DB::transaction(function () use (&$curso, $dataCurso, $data, $request) {
             $curso = Cursos::create($dataCurso);
 
             // módulos + aulas
             $ordemModulo = 1;
-            foreach (($data['modulos'] ?? []) as $m) {
+            foreach (($data['modulos'] ?? []) as $mIdx => $m) {
                 if (empty($m['titulo'])) continue;
 
                 $modulo = Modulos::create([
@@ -107,25 +112,35 @@ class CursoAdminController extends Controller
                 ]);
 
                 $ordemAula = 1;
-                foreach (($m['aulas'] ?? []) as $a) {
+                foreach (($m['aulas'] ?? []) as $aIdx => $a) {
                     if (empty($a['titulo'])) continue;
+
+                    // Prioriza arquivo se enviado
+                    $videoFile   = $request->file("modulos.$mIdx.aulas.$aIdx.video_file");
+                    $conteudoUrl = $a['conteudo_url'] ?? null;
+                    $tipo        = $a['tipo'] ?? 'video';
+
+                    if ($videoFile) {
+                        $dir  = "cursos/{$curso->id}/modulo-{$modulo->id}/videos";
+                        $name = Str::slug($a['titulo'] ?? 'aula').'-'.Str::random(6).'.'.$videoFile->getClientOriginalExtension();
+                        $path = $videoFile->storeAs($dir, $name, 'public');
+                        $conteudoUrl = Storage::disk('public')->url($path);
+                        $tipo = 'video';
+                    }
 
                     Aulas::create([
                         'modulo_id'              => $modulo->id,
                         'titulo'                 => $a['titulo'],
                         'descricao'              => $a['descricao'] ?? null,
-                        'tipo'                   => $a['tipo'] ?? 'video',
+                        'tipo'                   => $tipo,
                         'duracao_minutos'        => (int)($a['duracao_minutos'] ?? 0),
-                        'conteudo_url'           => $a['conteudo_url'] ?? null,
+                        'conteudo_url'           => $conteudoUrl,
                         'conteudo_texto'         => $a['conteudo_texto'] ?? null,
                         'ordem'                  => $ordemAula++,
                         'liberada_apos_anterior' => (bool)($a['liberada_apos_anterior'] ?? false),
                     ]);
                 }
             }
-
-
-
 
             // se a carga horária não foi preenchida, calculamos pela soma das aulas
             if (empty($dataCurso['carga_horaria_total'])) {
@@ -189,6 +204,10 @@ class CursoAdminController extends Controller
             'modulos.*.aulas.*.descricao'     => ['nullable','string'],
             'modulos.*.aulas.*.liberada_apos_anterior' => ['nullable','boolean'],
             'modulos.*.aulas.*.quiz_id'            => ['nullable','exists:quizzes,id'],
+            'modulos.*.aulas.*.video_file' => ['nullable','file',
+                'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime',
+                'max:1024000' // ~1GB (em KB) – ajuste se quiser
+            ],
         ]);
 
         // payload curso
@@ -211,103 +230,116 @@ class CursoAdminController extends Controller
             $payload['imagem_capa'] = $request->file('imagem_capa')->store('cursos/capas', 'public');
         }
 
-        DB::transaction(function () use ($curso, $payload, $data) {
+        DB::transaction(function () use ($curso, $payload, $data, $request) {
 
             // 1) Atualiza o curso
             $curso->update($payload);
 
-            // 2) Sincroniza módulos e aulas (se veio 'modulos'; senão, não altera estrutura)
+            // 2) Sincroniza módulos e aulas (se veio 'modulos')
             if (array_key_exists('modulos', $data)) {
 
                 // carrega estrutura atual para diffs
                 $curso->load(['modulos.aulas']);
-                $modulosAtuais   = $curso->modulos; // Collection
+                $modulosAtuais = $curso->modulos;
                 $idsModulosAtuais = $modulosAtuais->pluck('id')->all();
 
                 $idsModulosRecebidos = [];
                 $ordemModulo = 1;
 
-                foreach (($data['modulos'] ?? []) as $m) {
+                foreach (($data['modulos'] ?? []) as $mIdx => $m) {
                     $modId = $m['id'] ?? null;
 
                     if ($modId) {
-                        // UPDATE de módulo existente (garante que pertence ao curso)
                         $modulo = $modulosAtuais->firstWhere('id', $modId);
-                        if (!$modulo) {
-                            // segurança extra: evita mexer em módulo de outro curso
-                            continue;
-                        }
+                        if (!$modulo) continue;
                         $modulo->update([
-                            'titulo'    => $m['titulo'],
+                            'titulo' => $m['titulo'],
                             'descricao' => $m['descricao'] ?? null,
-                            'ordem'     => $ordemModulo++,
+                            'ordem' => $ordemModulo++,
                         ]);
                     } else {
-                        // CREATE novo módulo
                         $modulo = Modulos::create([
-                            'curso_id'  => $curso->id,
-                            'titulo'    => $m['titulo'],
+                            'curso_id' => $curso->id,
+                            'titulo' => $m['titulo'],
                             'descricao' => $m['descricao'] ?? null,
-                            'ordem'     => $ordemModulo++,
+                            'ordem' => $ordemModulo++,
                         ]);
                     }
 
                     $idsModulosRecebidos[] = $modulo->id;
 
                     // === AULAS ===
-                    $aulasAtuais = $modulo->aulas; // Collection
+                    $aulasAtuais = $modulo->aulas;
                     $idsAulasAtuais = $aulasAtuais->pluck('id')->all();
-
                     $idsAulasRecebidas = [];
                     $ordemAula = 1;
 
-                    foreach (($m['aulas'] ?? []) as $a) {
+                    foreach (($m['aulas'] ?? []) as $aIdx => $a) {
                         $aulaId = $a['id'] ?? null;
 
                         $payloadAula = [
-                            'titulo'                 => $a['titulo'],
-                            'descricao'              => $a['descricao'] ?? null,
-                            'tipo'                   => $a['tipo'] ?? 'video',
-                            'duracao_minutos'        => (int)($a['duracao_minutos'] ?? 0),
-                            'conteudo_url'           => $a['conteudo_url'] ?? null,
-                            'conteudo_texto'         => $a['conteudo_texto'] ?? null,
-                            'quiz_id'                => $a['quiz_id'] ?? null,
-                            'ordem'                  => $ordemAula++,
+                            'titulo' => $a['titulo'],
+                            'descricao' => $a['descricao'] ?? null,
+                            'tipo' => $a['tipo'] ?? 'video',
+                            'duracao_minutos' => (int)($a['duracao_minutos'] ?? 0),
+                            'conteudo_url' => $a['conteudo_url'] ?? null,
+                            'conteudo_texto' => $a['conteudo_texto'] ?? null,
+                            'ordem' => $ordemAula++,
                             'liberada_apos_anterior' => (bool)($a['liberada_apos_anterior'] ?? false),
+                            'quiz_id' => $a['quiz_id'] ?? null,
                         ];
 
-                        if ($aulaId) {
-                            // UPDATE aula (garante que pertence ao módulo)
-                            $aula = $aulasAtuais->firstWhere('id', $aulaId);
-                            if (!$aula) {
-                                continue;
+                        // Se arquivo foi enviado, prioriza-o
+                        $videoFile = $request->file("modulos.$mIdx.aulas.$aIdx.video_file");
+                        if ($videoFile) {
+                            // apaga local antigo se existia
+                            if ($aulaId) {
+                                $aulaExistente = $aulasAtuais->firstWhere('id', $aulaId);
+                                if ($aulaExistente && $aulaExistente->conteudo_url && Str::startsWith($aulaExistente->conteudo_url, '/storage/')) {
+                                    $rel = Str::after($aulaExistente->conteudo_url, '/storage/');
+                                    Storage::disk('public')->delete($rel);
+                                }
                             }
+                            $dir = "cursos/{$curso->id}/modulo-{$modulo->id}/videos";
+                            $name = Str::slug($a['titulo'] ?? 'aula') . '-' . Str::random(6) . '.' . $videoFile->getClientOriginalExtension();
+                            $path = $videoFile->storeAs($dir, $name, 'public');
+                            $payloadAula['conteudo_url'] = Storage::disk('public')->url($path);
+                            $payloadAula['tipo'] = 'video';
+                        }
+
+                        if ($aulaId) {
+                            $aula = $aulasAtuais->firstWhere('id', $aulaId);
+                            if (!$aula) continue;
                             $aula->update($payloadAula);
                         } else {
-                            // CREATE aula
-                            $aula = Aulas::create(array_merge($payloadAula, [
-                                'modulo_id' => $modulo->id,
-                            ]));
+                            $aula = Aulas::create($payloadAula + ['modulo_id' => $modulo->id]);
                         }
 
                         $idsAulasRecebidas[] = $aula->id;
                     }
 
-                    // DELETE aulas que não vieram mais no payload
+                    // DELETE aulas ausentes
                     $idsAulasParaExcluir = array_diff($idsAulasAtuais, $idsAulasRecebidas);
                     if (!empty($idsAulasParaExcluir)) {
+                        // apaga os vídeos locais dessas aulas (se houver)
+                        foreach ($aulasAtuais->whereIn('id', $idsAulasParaExcluir) as $ax) {
+                            if ($ax->conteudo_url && Str::startsWith($ax->conteudo_url, '/storage/')) {
+                                $rel = Str::after($ax->conteudo_url, '/storage/');
+                                Storage::disk('public')->delete($rel);
+                            }
+                        }
                         Aulas::whereIn('id', $idsAulasParaExcluir)->delete();
                     }
                 }
 
-                // DELETE módulos que não vieram mais
+                // DELETE módulos ausentes
                 $idsModulosParaExcluir = array_diff($idsModulosAtuais, $idsModulosRecebidos);
                 if (!empty($idsModulosParaExcluir)) {
-                    // cascade deve remover aulas, se FK estiver com onDelete(cascade)
+                    // (se quiser, percorra e apague vídeos locais das aulas desses módulos)
                     Modulos::whereIn('id', $idsModulosParaExcluir)->delete();
                 }
 
-                // (opcional) recalcular carga horária se necessário
+                // recalcular carga horária se necessário
                 if (empty($payload['carga_horaria_total'])) {
                     $min = $curso->modulos()->withSum('aulas', 'duracao_minutos')->get()
                         ->sum('aulas_sum_duracao_minutos');
@@ -336,6 +368,24 @@ class CursoAdminController extends Controller
     {
         if ($curso->professor_id != session('prof_id')) {
             abort(403, 'Sem permissão para esse curso.');
+        }
+    }
+
+    private function saveVideoAndGetUrl(UploadedFile $file, Cursos $curso, int $moduloId, string $titulo = 'aula'): string
+    {
+        $dir   = "cursos/{$curso->id}/modulo-{$moduloId}/videos";
+        $name  = Str::slug($titulo).'-'.Str::random(6).'.'.$file->getClientOriginalExtension();
+        $path  = $file->storeAs($dir, $name, 'public');      // storage/app/public/...
+        return Storage::disk('public')->url($path);          // /storage/...
+    }
+
+    private function deleteIfLocalUrl(?string $url): void
+    {
+        if (!$url) return;
+        $prefix = '/storage/';
+        if (Str::startsWith($url, $prefix)) {
+            $rel = Str::after($url, $prefix);                // caminho relativo dentro do disk public
+            Storage::disk('public')->delete($rel);
         }
     }
 }

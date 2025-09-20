@@ -278,6 +278,17 @@
                                                value="{{ old("modulos.$mIdx.aulas.$aIdx.conteudo_url", $aula->conteudo_url) }}"
                                                class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="https://...">
                                     </div>
+                                    {{-- NOVO: upload de vídeo opcional --}}
+                                    <div class="md:col-span-3">
+                                        <label class="text-sm font-medium">Enviar Vídeo (opcional)</label>
+                                        <input type="file"
+                                               name="modulos[{{ $mIdx }}][aulas][{{ $aIdx }}][video_file]"
+                                               accept="video/*"
+                                               class="mt-1 block w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-md file:border file:bg-slate-50 file:hover:bg-slate-100">
+                                        <p class="text-xs text-slate-500 mt-1">
+                                            Se você enviar um arquivo, a URL será ignorada. Formatos: MP4/WebM/OGG.
+                                        </p>
+                                    </div>
 
                                     <div class="flex items-center gap-2">
                                         @php
