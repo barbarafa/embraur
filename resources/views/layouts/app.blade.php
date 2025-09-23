@@ -33,10 +33,10 @@
 
 
         <nav class="hidden md:flex items-center gap-6 text-sm">
-            <a href="{{ route('site.home') }}" class="hover:text-blue-600">Início</a>
-            <a href="{{ route('site.cursos') }}" class="hover:text-blue-600">Cursos</a>
-            <a  href="{{ url('/#sobre') }}" class="hover:text-blue-600">Sobre Nós</a>
-            <a href="{{ url('/#contato') }}" class="hover:text-blue-600">Contato</a>
+            <a href="{{ route('site.home') }}" class="hover:text-blue-600">INICIO</a>
+            <a href="{{ route('site.cursos') }}" class="hover:text-blue-600">CURSOS</a>
+            <a  href="{{ url('/#sobre') }}" class="hover:text-blue-600">SOBRE NÓs</a>
+            <a href="{{ url('/#contato') }}" class="hover:text-blue-600">CONTATO</a>
         </nav>
 
 
@@ -44,8 +44,8 @@
 
 
         <div class="flex items-center gap-2">
-            <a href="{{ route('portal.aluno') }}" class="hidden sm:inline-flex btn btn-soft">Portal do Aluno</a>
-            <a href="{{ route('portal.professor') }}" class="hidden sm:inline-flex btn btn-outline">Portal do Professor</a>
+            <a href="{{ route('portal.aluno') }}" class="hidden sm:inline-flex btn btn-soft">PORTAL DO ALUNO</a>
+            <a href="{{ route('portal.professor') }}" class="hidden sm:inline-flex btn btn-outline">PORTAL DO PROFESSOR</a>
 
             @if(session('aluno_id'))
                 <form id="logoutForm" action="{{ route('aluno.logout') }}" method="POST" class="hidden md:inline-flex">
@@ -141,7 +141,7 @@
         <div>
             <div class="font-semibold mb-2">Contato</div>
             <ul class="space-y-1 text-slate-600">
-                <li>contato@eadpro.com.br</li><li>(11) 99999-9999</li><li>São Paulo, SP</li>
+                <li>contato@eadpro.com.br</li><li>(48) 3198-3198</li><li>São Paulo, SP</li>
             </ul>
         </div>
     </div>

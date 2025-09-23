@@ -7,7 +7,7 @@
     <section class="bg-[url('https://images.unsplash.com/photo-1554200876-56c2f25224fa?q=80&w=1920&auto=format&fit=crop')] bg-cover bg-center">
         <div class="bg-[#3b4333]/80"> {{-- brand-900/80 --}}
             <div class="mx-auto container-page px-4 py-20 text-white">
-                <span class="inline-block text-xs bg-white/20 px-2 py-1 rounded">Mais de 50.000 alunos certificados</span>
+                <span class="inline-block text-xs bg-white/20 px-2 py-1 rounded">Mais de 1000 alunos certificados</span>
                 <h1 class="mt-4 text-4xl md:text-5xl font-extrabold leading-tight">
                     Transforme sua carreira com<br><span class="text-[#c1cab0]">cursos de qualidade</span> {{-- brand-300 --}}
                 </h1>
@@ -21,31 +21,31 @@
     </section>
 
     {{-- Métricas --}}
-    <section class="bg-white">
-        <div class="mx-auto container-page px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="card p-6 text-center">
-                <div class="text-2xl font-bold">50.000+</div>
-                <div class="text-slate-500 text-sm">Alunos certificados</div>
-            </div>
-            <div class="card p-6 text-center">
-                <div class="text-2xl font-bold">200+</div>
-                <div class="text-slate-500 text-sm">Cursos disponíveis</div>
-            </div>
-            <div class="card p-6 text-center">
-                <div class="text-2xl font-bold">98%</div>
-                <div class="text-slate-500 text-sm">Taxa de aprovação</div>
-            </div>
-            <div class="card p-6 text-center">
-                <div class="text-2xl font-bold">24/7</div>
-                <div class="text-slate-500 text-sm">Suporte disponível</div>
-            </div>
-        </div>
-    </section>
+{{--    <section class="bg-white">--}}
+{{--        <div class="mx-auto container-page px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-6">--}}
+{{--            <div class="card p-6 text-center">--}}
+{{--                <div class="text-2xl font-bold">50.000+</div>--}}
+{{--                <div class="text-slate-500 text-sm">Alunos certificados</div>--}}
+{{--            </div>--}}
+{{--            <div class="card p-6 text-center">--}}
+{{--                <div class="text-2xl font-bold">200+</div>--}}
+{{--                <div class="text-slate-500 text-sm">Cursos disponíveis</div>--}}
+{{--            </div>--}}
+{{--            <div class="card p-6 text-center">--}}
+{{--                <div class="text-2xl font-bold">98%</div>--}}
+{{--                <div class="text-slate-500 text-sm">Taxa de aprovação</div>--}}
+{{--            </div>--}}
+{{--            <div class="card p-6 text-center">--}}
+{{--                <div class="text-2xl font-bold">24/7</div>--}}
+{{--                <div class="text-slate-500 text-sm">Suporte disponível</div>--}}
+{{--            </div>--}}
+{{--        </div>--}}
+{{--    </section>--}}
 
     {{-- Cursos Populares --}}
     <section class="py-12">
         <div class="mx-auto container-page px-4">
-            <h2 class="text-2xl font-bold text-center">Cursos Populares</h2>
+            <h2 class="text-2xl font-bold text-center">CURSOS POPULARES</h2>
             <p class="text-center text-slate-600 mt-1">Descubra os cursos mais procurados.</p>
 
             <div class="grid md:grid-cols-4 gap-4 mt-6">
@@ -94,7 +94,7 @@
             </div>
 
             <div class="text-center mt-6">
-                <a href="{{ route('site.cursos') }}" class="btn btn-outline">Ver Todos os Cursos</a>
+                <a href="{{ route('site.cursos') }}" class="btn btn-outline">VER TODOS OS CURSOS</a>
             </div>
         </div>
     </section>
@@ -102,7 +102,7 @@
     {{-- Parceiros (dinâmico) --}}
     <section class="bg-white">
         <div class="mx-auto container-page px-4 py-12">
-            <h2 class="text-2xl font-bold text-center">Empresas que confiam no nosso trabalho</h2>
+            <h2 class="text-2xl font-bold text-center">EMPRESAS QUE CONFIAM NO NOSSO TRABALHO</h2>
 
             @if($parceiros->isEmpty())
                 <p class="text-center text-slate-500 mt-4">Em breve novos parceiros por aqui.</p>
@@ -208,7 +208,7 @@
 
                 <div class="card p-6">
                     <div class="text-sm text-slate-500">Redes Sociais</div>
-                    <a href="https://instagram.com/seu_perfil" target="_blank" rel="noopener"
+                    <a href="https://www.instagram.com/embraur" target="_blank" rel="noopener"
                        class="mt-1 inline-flex items-center gap-2 font-semibold text-[#606d50] hover:underline">
                         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm11 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 .002 6.002A3 3 0 0 0 12 9Z"/></svg>
                         Instagram
