@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\{Cursos, ItensPedido, Matriculas, Pagamentos, Pedido, User};
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Preference\PreferenceClient;
@@ -170,7 +172,7 @@ class CheckoutController extends Controller
                 'failure' => route('checkout.retorno', ['status' => 'failure']),
                 'pending' => route('checkout.retorno', ['status' => 'pending']),
             ],
-//            'auto_return' => 'approved', // agora pode
+            'auto_return' => 'approved', // agora pode
         ];
 
         $payload['notification_url'] = config('services.mercadopago.notification_url');
@@ -194,9 +196,27 @@ class CheckoutController extends Controller
      */
     public function retorno(Request $r)
     {
+        $reqId  = (string) Str::uuid();
         $status = $r->query('status');                // success | failure | pending
         $prefId = $r->query('preference_id');         // string do MP
         $extRef = $r->query('external_reference');    // ex.: "PED:15" (se você passou isso ao criar a preferência)
+
+
+//        / ---- LOG DE ENTRADA DO REQUEST ----
+        $headersSafe = Arr::except($r->headers->all(), ['authorization', 'cookie']);
+        Log::channel('mp')->info('MP retorno: HIT', [
+            'req_id'     => $reqId,
+            'method'     => $r->method(),
+            'full_url'   => $r->fullUrl(),
+            'ip'         => $r->ip(),
+            'user_agent' => $r->userAgent(),
+            'status_qs'  => $status,
+            'pref_id'    => $prefId,
+            'ext_ref'    => $extRef,
+            'query'      => $r->query(),                    // só querystring
+            'body'       => Arr::except($r->all(), ['token','access_token','password','senha']),
+            'headers'    => $headersSafe,
+        ]);
 
         // Busque o pedido pela referência gravada quando criou a preferência
         $pedido = Pedido::with(['itens.curso'])
@@ -216,7 +236,12 @@ class CheckoutController extends Controller
         }
 
         // Trate cada status
-        if ($status === 'success' || 'approved') {
+        if ($status === 'success' || $status === 'approved') {
+
+            Log::channel('mp')->info('MP retorno: aprovado', [
+                'req_id'    => $reqId,
+                'pedido_id' => $pedido->id,
+            ]);
             try {
                 DB::transaction(function () use ($pedido) {
 
@@ -255,9 +280,11 @@ class CheckoutController extends Controller
                     }
                 });
             } catch (\Throwable $e) {
-                Log::error('Falha ao finalizar pedido e gerar matrículas', [
+                Log::channel('mp')->error('MP retorno: erro ao finalizar pedido', [
+                    'req_id'    => $reqId,
                     'pedido_id' => $pedido->id,
-                    'err'       => $e->getMessage(),
+                    'exception' => $e->getMessage(),
+                    'trace'     => Str::limit($e->getTraceAsString(), 2000),
                 ]);
 
                 return redirect()->route('aluno.dashboard')
@@ -269,7 +296,19 @@ class CheckoutController extends Controller
 
         }
 
+        Log::channel('mp')->info('MP retorno: não aprovado', [
+            'req_id'    => $reqId,
+            'pedido_id' => $pedido->id,
+            'status_qs' => $status,
+        ]);
+
         if ($status === 'pending') {
+
+            Log::channel('mp')->info('MP retorno: pendente', [
+                'req_id'    => $reqId,
+                'pedido_id' => $pedido->id,
+            ]);
+
             $pedido->update(['status' => 'pendente']);
 
             return redirect()->route('aluno.dashboard')
