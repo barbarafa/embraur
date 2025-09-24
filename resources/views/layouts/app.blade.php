@@ -8,6 +8,8 @@
 
     {{-- mantém o seu vite (se já estiver ok, segue usando) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+{{--    ,'resources/js/ckeditor.js'--}}
+
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{-- fallback SEM instalar nada: deixa tudo bonito mesmo se o vite não carregar --}}
@@ -23,6 +25,8 @@
     <style>html{scroll-behavior:smooth}</style>
 </head>
 @stack('scripts')
+
+
 <body class="bg-slate-50 text-slate-800">
 {{-- Header ÚNICO --}}
 <header class="bg-white border-b">
@@ -35,7 +39,7 @@
         <nav class="hidden md:flex items-center gap-6 text-sm">
             <a href="{{ route('site.home') }}" class="hover:text-blue-600">INICIO</a>
             <a href="{{ route('site.cursos') }}" class="hover:text-blue-600">CURSOS</a>
-            <a  href="{{ url('/#sobre') }}" class="hover:text-blue-600">SOBRE NÓs</a>
+            <a  href="{{ url('/#sobre') }}" class="hover:text-blue-600">SOBRE NÓS</a>
             <a href="{{ url('/#contato') }}" class="hover:text-blue-600">CONTATO</a>
         </nav>
 

@@ -55,6 +55,15 @@
                                     <div class="text-[11px] uppercase tracking-wide text-slate-500">Valor</div>
                                     <div class="text-xl font-extrabold">R$ {{ number_format($pd->valor_total ?? 0,2,',','.') }}</div>
                                 </div>
+                                @php $statusLower = strtolower($pd->status ?? ''); @endphp
+                                @if(!in_array($statusLower, ['pago','aprovado','approved']))
+                                    <div class="mt-3">
+                                        <a href="{{ route('checkout.cart.from_pedido', $pd->id) }}"
+                                           class="btn btn-primary">
+                                            Reabrir no carrinho
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
 
                             {{-- Itens do pedido (colapso nativo, visual igual ao resto) --}}

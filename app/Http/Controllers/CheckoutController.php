@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Cursos, ItensPedido, Matriculas, Pagamentos, Pedido, User};
+use App\Models\{Cupom, Cursos, ItensPedido, Matriculas, Pagamentos, Pedido, User};
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +24,65 @@ class CheckoutController extends Controller
         $rq->session()->put('cart', $cart->toArray());
         return back()->with('sucesso','Curso adicionado ao carrinho.');
     }
+
+    public function validarCupom(Request $r)
+    {
+        $codigo = trim((string)$r->query('codigo'));
+        if ($codigo === '') {
+            return response()->json(['ok' => false, 'mensagem' => 'Informe um código de cupom.'], 400);
+        }
+
+        // subtotal do carrinho atual (sessão)
+        $cart = collect($r->session()->get('cart', []));
+        if ($cart->isEmpty()) {
+            return response()->json(['ok' => false, 'mensagem' => 'Seu carrinho está vazio.'], 400);
+        }
+        $subtotal = (float) $cart->sum(fn($i) => (float) ($i['preco'] ?? 0));
+
+        // === valida e calcula desconto ===
+        // Se você já tem o helper aplicarCupom($codigo, $subtotal), use-o:
+        if (method_exists($this, 'aplicarCupom')) {
+            [$cupom, $desconto] = $this->aplicarCupom($codigo, $subtotal);
+            if (!$cupom) {
+                return response()->json(['ok' => false, 'mensagem' => 'Cupom inválido ou fora da validade.'], 422);
+            }
+            // guarda na sessão para o checkout
+            $r->session()->put('cupom', $codigo);
+            $total = max($subtotal - $desconto, 0.0);
+
+            return response()->json([
+                'ok'        => true,
+                'mensagem'  => 'Cupom aplicado com sucesso.',
+                'subtotal'  => $subtotal,
+                'desconto'  => $desconto,
+                'total'     => $total,
+                'codigo'    => $cupom->codigo,
+                'tipo'      => $cupom->tipo,
+                'valor'     => (float)$cupom->valor,
+            ]);
+        }
+
+        // Fallback simples (caso não tenha o helper ainda)
+        $cupom = \App\Models\Cupom::where('codigo', mb_strtoupper($codigo))->first();
+        if (!$cupom || !$cupom->ativoAgora()) {
+            return response()->json(['ok' => false, 'mensagem' => 'Cupom inválido ou fora da validade.'], 422);
+        }
+        $desconto = $cupom->calcularDesconto($subtotal);
+        $r->session()->put('cupom', $cupom->codigo);
+        $total = max($subtotal - $desconto, 0.0);
+
+        return response()->json([
+            'ok'        => true,
+            'mensagem'  => 'Cupom aplicado com sucesso.',
+            'subtotal'  => $subtotal,
+            'desconto'  => $desconto,
+            'total'     => $total,
+            'codigo'    => $cupom->codigo,
+            'tipo'      => $cupom->tipo,
+            'valor'     => (float)$cupom->valor,
+        ]);
+    }
+
 
     public function count(Request $rq)
     {
@@ -48,30 +107,33 @@ class CheckoutController extends Controller
     public function startCart(Request $r)
     {
         $aluno = auth('aluno')->user();
-
-        // Fallback: se tem sessão antiga, loga no guard para esta requisição
         if (!$aluno && ($id = $r->session()->get('aluno_id'))) {
             $aluno = User::find($id);
-            if ($aluno) {
-                auth('aluno')->login($aluno);
-            }
+            if ($aluno) auth('aluno')->login($aluno);
         }
         abort_if(!$aluno, 403);
 
-        $cart = collect($r->session()->get('cart', []))->values(); // items: id,titulo,preco
+        $cart = collect($r->session()->get('cart', []))->values();
         abort_if($cart->isEmpty(), 400, 'Carrinho vazio.');
 
-        $valorTotal = (float) $cart->sum(fn($i) => (float)$i['preco']);
+        $subtotal = (float) $cart->sum(fn($i) => (float)$i['preco']);
+
+        // === CUPOM ===
+        $codigoCupom = $r->input('cupom') ?: $r->session()->get('cupom');
+        [$cupom, $desconto] = $this->aplicarCupom($codigoCupom, $subtotal);
+        $total = max($subtotal - $desconto, 0.0);
 
         // Cria pedido + itens
-        $pedido = DB::transaction(function () use ($aluno, $cart, $valorTotal) {
+        $pedido = DB::transaction(function () use ($aluno, $cart, $total, $cupom, $desconto) {
             $pedido = Pedido::create([
                 'aluno_id' => $aluno->id,
-                'valor_total' => $valorTotal,
+                'valor_total' => $total,
                 'status' => 'pendente',
                 'metodo_pagamento' => 'mercadopago',
                 'referencia_pagamento_externa' => null,
                 'data_pedido' => now(),
+                'cupom_id' => optional($cupom)->id,
+                'desconto_total' => $desconto,
             ]);
             foreach ($cart as $c) {
                 ItensPedido::create([
@@ -91,43 +153,107 @@ class CheckoutController extends Controller
             'quantity'    => 1,
             'unit_price'  => (float) $c['preco'],
             'currency_id' => 'BRL',
-        ])->all();
+        ])->values()->all();
 
-        // === Mercado Pago ===
-        $pref = $this->mpCreatePreference($items, 'PED:' . $pedido->id);
+        // **Ajuste de preço para refletir o desconto**:
+        if ($desconto > 0 && isset($items[0])) {
+            $items[0]['unit_price'] = max(0.01, round($items[0]['unit_price'] - $desconto, 2));
+        }
 
+        $pref = $this->mpCreatePreference($items, 'PED:' . $pedido->id, $cupom?->codigo, $desconto);
         $pedido->update(['referencia_pagamento_externa' => $pref->id]);
 
         return redirect()->away($pref->init_point);
     }
 
+    public function validarCupomItem(Request $r, Cursos $curso)
+    {
+        $codigo = trim((string)$r->query('codigo'));
+        if ($codigo === '') {
+            return response()->json(['ok' => false, 'mensagem' => 'Informe um código de cupom.'], 400);
+        }
+
+        $subtotal = (float) ($curso->preco ?? 0);
+
+        // Se existir helper aplicarCupom($codigo, $subtotal):
+        if (method_exists($this, 'aplicarCupom')) {
+            [$cupom, $desconto] = $this->aplicarCupom($codigo, $subtotal);
+            if (!$cupom) {
+                return response()->json(['ok' => false, 'mensagem' => 'Cupom inválido ou fora da validade.'], 422);
+            }
+            $total = max($subtotal - $desconto, 0.0);
+            return response()->json([
+                'ok' => true,
+                'mensagem' => 'Cupom aplicado com sucesso.',
+                'subtotal' => $subtotal,
+                'desconto' => $desconto,
+                'total' => $total,
+                'codigo' => $cupom->codigo,
+                'tipo' => $cupom->tipo,
+                'valor' => (float)$cupom->valor,
+            ]);
+        }
+
+        // Fallback direto via modelo
+        $cupom = \App\Models\Cupom::where('codigo', mb_strtoupper($codigo))->first();
+        if (!$cupom || !$cupom->ativoAgora()) {
+            return response()->json(['ok' => false, 'mensagem' => 'Cupom inválido ou fora da validade.'], 422);
+        }
+        $desconto = $cupom->calcularDesconto($subtotal);
+        $total = max($subtotal - $desconto, 0.0);
+
+        return response()->json([
+            'ok' => true,
+            'mensagem' => 'Cupom aplicado com sucesso.',
+            'subtotal' => $subtotal,
+            'desconto' => $desconto,
+            'total' => $total,
+            'codigo' => $cupom->codigo,
+            'tipo' => $cupom->tipo,
+            'valor' => (float)$cupom->valor,
+        ]);
+    }
+
+
+
+    private function aplicarCupom(?string $codigo, float $subtotal): array
+    {
+        if (!$codigo) return [null, 0.0];
+
+        $cupom = Cupom::where('codigo', mb_strtoupper(trim($codigo)))->first();
+        if (!$cupom || !$cupom->ativoAgora()) return [null, 0.0];
+
+        $desconto = $cupom->calcularDesconto($subtotal);
+        return [$cupom, $desconto];
+    }
 
     public function start(Request $r, Cursos $curso)
     {
         $aluno = auth('aluno')->user();
-
-        // Fallback: se tem sessão antiga, loga no guard para esta requisição
         if (!$aluno && ($id = $r->session()->get('aluno_id'))) {
             $aluno = User::find($id);
-            if ($aluno) {
-                auth('aluno')->login($aluno);
-            }
+            if ($aluno) auth('aluno')->login($aluno);
         }
         abort_if(!$aluno, 403);
 
         $preco = (float)($curso->preco ?? 0);
-        $quantidade = 1;
-        $subtotal = $preco * $quantidade;
+        $subtotal = $preco;
 
-        // Cria o pedido + item de forma transacional
-        $pedido = DB::transaction(function () use ($aluno, $curso, $preco,$subtotal) {
+        // === CUPOM ===
+        $codigoCupom = trim((string) $r->input('cupom'));
+        [$cupom, $desconto] = $this->aplicarCupom($codigoCupom, $subtotal);
+        $total = max($subtotal - $desconto, 0.0);
+
+        $pedido = DB::transaction(function () use ($aluno, $curso, $total, $preco, $cupom, $desconto) {
             $pedido = Pedido::create([
                 'aluno_id' => $aluno->id,
-                'valor_total' => $subtotal,
+                'valor_total' => $total,
                 'status' => 'pendente',
                 'metodo_pagamento' => 'mercadopago',
                 'referencia_pagamento_externa' => null,
                 'data_pedido' => now(),
+                'cupom_id' => optional($cupom)->id,
+                'desconto_total' => $desconto,
             ]);
             ItensPedido::create([
                 'pedido_id' => $pedido->id,
@@ -143,28 +269,23 @@ class CheckoutController extends Controller
             'id'          => (string) $curso->id,
             'title'       => (string) $curso->titulo,
             'quantity'    => 1,
-            'unit_price'  => (float) $preco,
+            'unit_price'  => max(0.01, round($preco - $desconto, 2)), // reflete desconto
             'currency_id' => 'BRL',
         ]];
 
-        $pref = $this->mpCreatePreference($items, 'PED:' . $pedido->id);
-
+        $pref = $this->mpCreatePreference($items, 'PED:' . $pedido->id, $cupom?->codigo, $desconto);
         $pedido->update(['referencia_pagamento_externa' => $pref->id]);
 
         return redirect()->away($pref->init_point);
     }
 
 
-    private function mpCreatePreference(array $items, string $externalRef)
+
+    private function mpCreatePreference(array $items, string $externalRef, ?string $couponCode = null, float $discount = 0.0)
     {
         MercadoPagoConfig::setAccessToken(config('services.mercadopago.token'));
-
         $client  = new PreferenceClient();
 
-        // garanta URLs absolutas e não-vazias
-
-
-        // fallback defensivo: se por qualquer motivo $success ficar vazio, não use auto_return
         $payload = [
             'items'               => $items,
             'external_reference'  => $externalRef,
@@ -173,16 +294,20 @@ class CheckoutController extends Controller
                 'failure' => route('checkout.retorno', ['status' => 'failure']),
                 'pending' => route('checkout.retorno', ['status' => 'pending']),
             ],
-            'auto_return' => 'approved', // agora pode
+           // 'auto_return' => 'approved',
+            'metadata' => [
+                'coupon_code'    => $couponCode,
+                'discount_amount'=> $discount,
+            ],
         ];
 
         $payload['notification_url'] = config('services.mercadopago.notification_url');
 
         try {
             return $client->create($payload);
-        } catch (MPApiException $e) {
+        } catch (\MercadoPago\Exceptions\MPApiException $e) {
             $resp = $e->getApiResponse();
-            Log::error('MP Preference error', [
+            \Log::error('MP Preference error', [
                 'status'  => optional($resp)->getStatusCode(),
                 'body'    => optional($resp)->getContent(),
                 'payload' => $payload,
@@ -190,6 +315,32 @@ class CheckoutController extends Controller
             throw $e;
         }
     }
+
+    public function cartFromPedido(Request $rq, Pedido $pedido)
+    {
+        // Garante que é o aluno dono do pedido
+        $alunoId = $this->alunoId($rq);
+        abort_if(!$alunoId, 403);
+        abort_if((int)$pedido->aluno_id !== (int)$alunoId, 403);
+
+        // Carrega itens do pedido no carrinho da sessão
+        $pedido->loadMissing('itens.curso');
+
+        $cart = collect();
+        foreach ($pedido->itens as $it) {
+            $cart->put($it->curso_id, [
+                'id'     => (int) $it->curso_id,
+                'titulo' => (string) ($it->curso->titulo ?? 'Curso'),
+                'preco'  => (float) $it->preco_unitario, // mantém o preço do pedido
+            ]);
+        }
+        $rq->session()->put('cart', $cart->toArray());
+
+        // Leva para o carrinho para o aluno finalizar
+        return redirect()->route('checkout.cart')
+            ->with('sucesso', 'Itens do pedido foram reabertos no carrinho.');
+    }
+
 
     /**
      * Retorno síncrono do Mercado Pago (success|failure|pending).

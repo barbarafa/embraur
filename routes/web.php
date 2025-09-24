@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Professor\CupomController;
 use App\Http\Controllers\Professor\ProfRelatorioController;
 use App\Http\Controllers\ProfRelatoriosController;
+use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
 // Site (público)
@@ -45,9 +47,7 @@ Route::get('/curso/{id}', [CursoController::class, 'show'])->name('site.curso.de
 
 
 Route::middleware('aluno.auth')->group(function () {
-    Route::get('/checkout/{curso}', [CheckoutController::class, 'start'])
-        ->name('checkout.start')
-        ->whereNumber('curso'); // <<< só números; não pega "retorno"
+    Route::get('/checkout/{curso}', [CheckoutController::class, 'start'])->name('checkout.start')->whereNumber('curso'); // <<< só números; não pega "retorno"
     // Checkout do carrinho (vários cursos)
     Route::post('/checkout/start-cart',[CheckoutController::class, 'startCart'])->name('checkout.start.cart');
 });
@@ -58,12 +58,17 @@ Route::get('/carrinho',                   [CheckoutController::class, 'cart'])->
 Route::post('/carrinho/add/{curso}',      [CheckoutController::class, 'add'])->name('checkout.cart.add');
 Route::delete('/carrinho/remove/{curso}', [CheckoutController::class, 'remove'])->name('checkout.cart.remove');
 Route::get('/carrinho/count',             [CheckoutController::class, 'count'])->name('checkout.cart.count');
+Route::get('/checkout/cart/from-pedido/{pedido}', [CheckoutController::class, 'cartFromPedido'])->name('checkout.cart.from_pedido');
+Route::get('/checkout/cupom/validar', [CheckoutController::class, 'validarCupom'])->name('checkout.cupom.validar');
+Route::get('/checkout/cupom/validar-item/{curso}', [CheckoutController::class, 'validarCupomItem'])->name('checkout.cupom.validar_item');
+
 
 
 
 // Retornos do Mercado Pago
 Route::get('/checkout/retorno',[CheckoutController::class, 'retorno'])->name('checkout.retorno');
 Route::get('/checkout/webhook',[CheckoutController::class, 'webhook'])->name('checkout.webhook');
+
 
 
 
@@ -221,5 +226,16 @@ Route::prefix('prof')->name('prof.')->group(function () {
         Route::get('/relatorios/alunos',         [ProfRelatorioController::class, 'alunos'])->name('relatorios.alunos');
         Route::get('/relatorios/pedidos',        [ProfRelatorioController::class, 'pedidos'])->name('relatorios.pedidos');
         Route::get('/relatorios/cursos',         [ProfRelatorioController::class, 'cursos'])->name('relatorios.cursos');
+
+        Route::post('/uploads/ckeditor', [UploadController::class, 'ckeditor'])
+            ->name('uploads.ckeditor');
+
+        // ====== Cupons (CRUD) – seguindo o mesmo padrão dos seus CRUDs ======
+        Route::get('cupons',                 [CupomController::class, 'index'])->name('cupons.index');
+        Route::get('cupons/criar',           [CupomController::class, 'create'])->name('cupons.create');
+        Route::post('cupons',                [CupomController::class, 'store'])->name('cupons.store');
+        Route::get('cupons/{cupom}/editar',  [CupomController::class, 'edit'])->name('cupons.edit');
+        Route::put('cupons/{cupom}',         [CupomController::class, 'update'])->name('cupons.update');
+        Route::delete('cupons/{cupom}',      [CupomController::class, 'destroy'])->name('cupons.destroy');
     });
 });

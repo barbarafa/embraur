@@ -5,6 +5,7 @@
 @section('content')
     <div class="mx-auto container-page px-4 py-6">
         {{-- Tabs --}}
+
         @include('prof._tabs',['active'=>'relatorios'])
 
         <h1 class="text-2xl font-bold mb-4">Relatórios</h1>

@@ -23,4 +23,9 @@
        class="px-4 py-2 rounded-lg {{ ($active ?? '')==='relatorios' ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
         Relatórios
     </a>
+
+    <a href="{{ route('prof.cupons.index') }}"
+       class="px-4 py-2 rounded-lg {{ ($active ?? '')==='cupons' ? 'bg-gray-100 font-semibold' : 'text-gray-600 hover:bg-gray-50' }}">
+        Cupons
+    </a>
 </div>

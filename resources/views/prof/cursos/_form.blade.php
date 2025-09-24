@@ -264,12 +264,19 @@
 
                                     <div class="md:col-span-4">
                                         <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
-                                        <textarea
-                                            id="editor-desc-{{ $mIdx }}-{{ $aIdx }}"
-                                            name="modulos[{{ $mIdx }}][aulas][{{ $aIdx }}][descricao]"
-                                            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
-                                            rows="5"
-                                        >{{ old("modulos.$mIdx.aulas.$aIdx.descricao", $aula->descricao) }}</textarea>
+{{--                                        <textarea--}}
+{{--                                            id="editor-desc-{{ $mIdx }}-{{ $aIdx }}"--}}
+{{--                                            name="modulos[{{ $mIdx }}][aulas][{{ $aIdx }}][descricao]"--}}
+{{--                                            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"--}}
+{{--                                            rows="5"--}}
+{{--                                        >{{ old("modulos.$mIdx.aulas.$aIdx.descricao", $aula->descricao) }}</textarea>--}}
+
+                                        <x-editor
+                                            :id="'editor-desc-'.$mIdx.'-'.$aIdx"
+                                            :name="'modulos['.$mIdx.'][aulas]['.$aIdx.'][descricao]'"
+                                            :value="$aula->descricao"
+                                        />
+
                                     </div>
 
                                     <div class="md:col-span-3">
@@ -475,12 +482,17 @@
         </div>
         <div class="md:col-span-4">
           <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
-          <textarea
-            name="modulos[${mIdx}][aulas][${aIdx}][descricao]"
-            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
-            rows="5"
-            placeholder="Descreva os pontos principais desta aula..."
-          ></textarea>
+          <!-- <textarea
+             name="modulos[${mIdx}][aulas][${aIdx}][descricao]"
+             class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
+             rows="5"
+             placeholder="Descreva os pontos principais desta aula..."
+           ></textarea> -->
+        <x-editor
+            :id="'editor-desc-'.$mIdx.'-'.$aIdx"
+            :name="'modulos['.$mIdx.'][aulas]['.$aIdx.'][descricao]'"
+            :value="$aula->descricao"
+        />
         </div>
         <div class="md:col-span-3">
           <label class="text-sm font-medium">URL do Conteúdo (opcional)</label>

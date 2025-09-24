@@ -19,6 +19,8 @@ class Pedido extends Model
         'referencia_pagamento_externa',
         'data_pedido',
         'data_pagamento',
+        'cupom_id',
+        'desconto_total'
     ];
 
     protected $casts = [
