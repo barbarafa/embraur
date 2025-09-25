@@ -264,18 +264,14 @@
 
                                     <div class="md:col-span-4">
                                         <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
-{{--                                        <textarea--}}
-{{--                                            id="editor-desc-{{ $mIdx }}-{{ $aIdx }}"--}}
-{{--                                            name="modulos[{{ $mIdx }}][aulas][{{ $aIdx }}][descricao]"--}}
-{{--                                            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"--}}
-{{--                                            rows="5"--}}
-{{--                                        >{{ old("modulos.$mIdx.aulas.$aIdx.descricao", $aula->descricao) }}</textarea>--}}
+                                        <textarea
+                                            id="editor-desc-{{ $mIdx }}-{{ $aIdx }}"
+                                            name="modulos[{{ $mIdx }}][aulas][{{ $aIdx }}][conteudo_texto]"
+                                            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
+                                            rows="5"
+                                        >{{ old("modulos.$mIdx.aulas.$aIdx.descricao", $aula->conteudo_texto) }}</textarea>
 
-                                        <x-editor
-                                            :id="'editor-desc-'.$mIdx.'-'.$aIdx"
-                                            :name="'modulos['.$mIdx.'][aulas]['.$aIdx.'][descricao]'"
-                                            :value="$aula->descricao"
-                                        />
+
 
                                     </div>
 
@@ -362,9 +358,6 @@
 {{-- JS: preview, colapsar módulos, numerar e atalhos (sem mudanças de seletor) --}}
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
-
-
-
 
     (function(){
         // preview imagem
@@ -482,16 +475,13 @@
         </div>
         <div class="md:col-span-4">
           <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
-          <!-- <textarea
+           <textarea
              name="modulos[${mIdx}][aulas][${aIdx}][descricao]"
              class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
              rows="5"
              placeholder="Descreva os pontos principais desta aula..."
-           ></textarea> -->
-        <x-editor
-            :id="'editor-desc-'.$mIdx.'-'.$aIdx"
-            :name="'modulos['.$mIdx.'][aulas]['.$aIdx.'][descricao]'"
-            :value="$aula->descricao"
+           ></textarea>
+
         />
         </div>
         <div class="md:col-span-3">
@@ -547,102 +537,98 @@
         addModuloBtn?.addEventListener('click', addModulo);
     })();
 
-    document.querySelectorAll('.js-editor').forEach((el) => {
-        ClassicEditor.create(el, {
-            language: 'pt-br',
-            toolbar: {
-                items: [
-                    'undo','redo','|',
-                    'heading','|',
-                    'bold','italic','underline','link','|',
-                    'bulletedList','numberedList','blockQuote','|',
-                    'insertTable','|',
-                    'alignment','outdent','indent','|',
-                    'codeBlock','horizontalLine'
-                ]
-            },
-            table: {
-                contentToolbar: [
-                    'tableColumn', 'tableRow', 'mergeTableCells',
-                    'tableProperties', 'tableCellProperties'
-                ]
-            },
-            // Sem upload de imagem por enquanto (pode habilitar depois)
-            removePlugins: ['CKBox','CKFinder','EasyImage']
-        }).catch(err => console.error(err));
-    });
-
-    window.ckEditors = new WeakMap();
-
-    const ckOptions = {
-        language: 'pt-br',
-        toolbar: {
-            items: [
-                'undo','redo','|',
-                'heading','|',
-                'bold','italic','underline','link','|',
-                'bulletedList','numberedList','blockQuote','|',
-                'insertTable','|',
-                'alignment','outdent','indent','|',
-                'codeBlock','horizontalLine'
-            ]
-        },
-        table: {
-            contentToolbar: [
-                'tableColumn','tableRow','mergeTableCells',
-                'tableProperties','tableCellProperties'
-            ]
-        },
-        removePlugins: ['CKBox','CKFinder','EasyImage']
-    };
-
-    function initCKEditor(el){
-        if(!el || window.ckEditors.has(el)) return;
-        ClassicEditor.create(el, ckOptions)
-            .then(instance => window.ckEditors.set(el, instance))
-            .catch(console.error);
-    }
-
-    function destroyCKEditor(el){
-        const inst = window.ckEditors.get(el);
-        if(inst){
-            inst.destroy().catch(()=>{});
-            window.ckEditors.delete(el);
-        }
-    }
-
-    // Inicializa os existentes na página
-    document.querySelectorAll('textarea.js-ckeditor').forEach(initCKEditor);
-
-    // Se você adiciona/remova aulas via JS, chame isso após inserir o bloco:
-    //   initCKEditor(novoBloco.querySelector('textarea.js-ckeditor'));
-
-    // Se preferir automático para elementos adicionados dinamicamente:
-    const obs = new MutationObserver((mutations)=>{
-        mutations.forEach(m=>{
-            m.addedNodes.forEach(node=>{
-                if(node.nodeType===1){
-                    if(node.matches('textarea.js-ckeditor')) initCKEditor(node);
-                    node.querySelectorAll?.('textarea.js-ckeditor').forEach(initCKEditor);
-                }
-            });
-            m.removedNodes.forEach(node=>{
-                if(node.nodeType===1){
-                    if(node.matches('textarea.js-ckeditor')) destroyCKEditor(node);
-                    node.querySelectorAll?.('textarea.js-ckeditor').forEach(destroyCKEditor);
-                }
-            });
-        });
-    });
-    obs.observe(document.body, {childList:true, subtree:true});
-
-    // (opcional) garante sincronização antes de submeter
-    document.querySelector('form')?.addEventListener('submit', ()=>{
-        document.querySelectorAll('textarea.js-ckeditor').forEach(el=>{
-            const inst = window.ckEditors.get(el);
-            if(inst) inst.updateSourceElement();
-        });
-    });
 </script>
+
+
+<script>
+    (function () {
+
+        const UPLOAD_URL = "{{ route('prof.uploads.ckeditor') }}?_token={{ csrf_token() }}";
+
+        // Permite <video> e <source> no conteúdo
+        const htmlSupport = {
+            allow: [
+                { name: /^(video|source)$/, attributes: true, classes: true, styles: true }
+            ]
+        };
+
+        // MediaEmbed com player também para .mp4/.webm/.ogg hospedados por você
+        const mediaEmbed = {
+            previewsInData: true,
+            extraProviders: [
+                {
+                    name: 'localVideo',
+                    // link terminando com .mp4/.webm/.ogg
+                    url: /^https?:\/\/[^ ]+\.(mp4|webm|ogg)$/i,
+                    html: match => {
+                        const url = match[0];
+                        const ext = (url.split('.').pop() || '').toLowerCase();
+                        const type = ext === 'ogv' ? 'ogg' : ext;
+                        return `<video controls style="max-width:100%;height:auto;">
+                    <source src="${url}" type="video/${type}">
+                  </video>`;
+                    }
+                }
+            ]
+        };
+
+        const toolbar = [
+            'undo','redo','|',
+            'heading','|',
+            'bold','italic','underline','link','|',
+            'bulletedList','numberedList','blockQuote','|',
+            'insertTable','imageUpload','mediaEmbed','|',
+            'alignment','outdent','indent','|',
+            'codeBlock','horizontalLine'
+        ];
+
+        // Cria todos os .js-ckeditor da página
+        document.querySelectorAll('textarea.js-ckeditor').forEach((el) => {
+            ClassicEditor.create(el, {
+                language: 'pt-br',
+                toolbar: { items: toolbar },
+                ckfinder: { uploadUrl: UPLOAD_URL },   // ← upload direto (imagem/vídeo/qualquer arquivo)
+                mediaEmbed,
+                htmlSupport,
+                // se a sua build vier com esses plugins e você não quiser usar, remova daqui:
+                removePlugins: ['CKBox','CKFinder','EasyImage']
+            })
+                .then((editor) => {
+                    // Dica: se arrastar soltar um .mp4, o CKEditor envia ao UPLOAD_URL.
+                    // Depois é só colar a URL na linha e usar mediaEmbed: o preview vira <video> automaticamente.
+                    // Para facilitar, sempre que subir vídeo a gente já insere o player:
+                    const fileRepo = editor.plugins.get('FileRepository');
+
+                    // Sobrescreve a renderização pós-upload de vídeo: insere como mediaEmbed
+                    const origCreateAdapter = fileRepo.createUploadAdapter.bind(fileRepo);
+                    fileRepo.createUploadAdapter = loader => {
+                        const adapter = origCreateAdapter(loader);
+                        const origUpload = adapter.upload?.bind(adapter);
+                        // Se for o adapter padrão do ckfinder, terá upload(); senão, só retorna o adapter
+                        if (!origUpload) return adapter;
+
+                        adapter.upload = async () => {
+                            const res = await origUpload();
+                            try {
+                                const url = res?.default ?? res?.url ?? res?.urls?.default ?? res?.url;
+                                if (url && /\.(mp4|webm|ogg)$/i.test(url)) {
+                                    // insere um media embed com o vídeo local
+                                    editor.execute('mediaEmbed', url);
+                                    // retorna algo "inofensivo" pro fluxo de upload de imagem
+                                    return { default: url };
+                                }
+                            } catch(e) {}
+                            return res;
+                        };
+                        return adapter;
+                    };
+
+                })
+                .catch(console.error);
+        });
+
+    })();
+</script>
+
 
 {{--@endsection--}}

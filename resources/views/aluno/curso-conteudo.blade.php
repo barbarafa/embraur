@@ -2,6 +2,35 @@
 @extends('layouts.app')
 @section('title', $curso->titulo)
 
+@section('head')
+    <style>
+        /* mídia do CKEditor responsiva dentro do artigo */
+        .prose iframe,
+        .prose video {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16/9;
+            display: block;
+        }
+        .prose img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            border-radius: .375rem; /* opcional */
+        }
+        /* figuras do CKEditor ficam com margem bonitinha */
+        .prose figure {
+            margin: 1rem 0;
+        }
+        .prose figure > figcaption {
+            font-size: .875rem;
+            color: rgb(100 116 139);
+            text-align: center;
+            margin-top: .25rem;
+        }
+    </style>
+@endsection
+
 @section('content')
     <div class="container mx-auto py-6">
 
@@ -19,67 +48,56 @@
                 @php
                     use Illuminate\Support\Str;
 
-                    $tipo = Str::lower($aula->tipo ?? '');
-                    $isVideo = $tipo === 'video' && filled($aula->conteudo_url);
-                    $isText  = $tipo === 'texto' && filled($aula->conteudo_texto);
-
-                    $src = trim((string)($aula->conteudo_url ?? ''));
+                    $tipo    = Str::lower($aula->tipo ?? '');
+                    $hasHtml = filled($aula->conteudo_texto);    // CKEditor
+                    $isVideo = !$hasHtml && $tipo === 'video' && filled($aula->conteudo_url); // só se não tiver HTML
+                    $src     = trim((string)($aula->conteudo_url ?? ''));
 
                     if ($isVideo && $src) {
                         if (Str::contains($src, 'youtu.be/')) {
-                            $id  = Str::after($src, 'youtu.be/'); $id  = Str::before($id, '?');
+                            $id  = Str::after($src, 'youtu.be/'); $id = Str::before($id, '?');
                             $src = 'https://www.youtube.com/embed/' . $id;
                         } elseif (Str::contains($src, 'watch?v=')) {
-                            $id  = Str::after($src, 'v='); $id  = Str::before($id, '&');
+                            $id  = Str::after($src, 'v='); $id = Str::before($id, '&');
                             $src = 'https://www.youtube.com/embed/' . $id;
                         } elseif (Str::contains($src, 'vimeo.com/')) {
                             if (preg_match('~vimeo\.com/(\d+)~', $src, $m)) {
                                 $src = 'https://player.vimeo.com/video/' . $m[1];
                             }
                         }
-                        // YouTube: garante parâmetros para a IFrame API
                         if (Str::contains($src, 'youtube.com/embed/')) {
                             $src .= (Str::contains($src, '?') ? '&' : '?') . 'enablejsapi=1&rel=0';
                         }
                     }
                 @endphp
 
-                <div class="relative rounded-lg border aspect-video bg-black overflow-hidden">
-                    @if($isVideo)
-                        {{-- Iframe/Video ocupa 100% do frame --}}
-                        @if(Str::contains($src, ['youtube.com','youtu.be','vimeo.com','player.vimeo.com']))
-                            <iframe
-                                class="absolute inset-0 w-full h-full"
-                                src="{{ $src }}"
-                                allow="autoplay; fullscreen; picture-in-picture"
-                                allowfullscreen
-                                referrerpolicy="strict-origin-when-cross-origin"
-                            ></iframe>
-                        @else
-                            {{-- MP4 direto --}}
-                            <video
-                                class="absolute inset-0 w-full h-full"
-                                src="{{ $src }}"
-                                controls
-                                playsinline
-                            ></video>
-                        @endif
-
-                    @elseif($isText)
-                        {{-- Texto no mesmo frame, com tipografia e rolagem --}}
-                        <div class="absolute inset-0 bg-white overflow-auto overscroll-contain">
-                            <article class="prose prose-slate max-w-none p-6">
-                                {!! $aula->conteudo_texto !!}
-                            </article>
+                <div class="rounded-lg border bg-white overflow-hidden">
+                    @if($hasHtml)
+                        {{-- CKEditor: texto + imagens + vídeos juntos --}}
+                        <article class="prose prose-slate max-w-none p-6">
+                            {!! $aula->conteudo_texto !!}
+                        </article>
+                    @elseif($isVideo)
+                        {{-- Player “puro” quando não há conteúdo CKEditor --}}
+                        <div class="relative aspect-video bg-black">
+                            @if(Str::contains($src, ['youtube.com','youtu.be','vimeo.com','player.vimeo.com']))
+                                <iframe
+                                    class="absolute inset-0 w-full h-full"
+                                    src="{{ $src }}"
+                                    allow="autoplay; fullscreen; picture-in-picture"
+                                    allowfullscreen
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                ></iframe>
+                            @else
+                                <video class="absolute inset-0 w-full h-full" src="{{ $src }}" controls playsinline></video>
+                            @endif
                         </div>
-
                     @else
-                        {{-- Placeholder quando não há conteúdo --}}
-                        <div class="absolute inset-0 grid place-items-center text-slate-200">
-                            Conteúdo da aula
-                        </div>
+                        <div class="p-6 text-slate-400">Conteúdo da aula</div>
                     @endif
                 </div>
+
+
 
 
                 {{-- Título + Navegação --}}
