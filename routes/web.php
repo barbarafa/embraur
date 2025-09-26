@@ -46,6 +46,7 @@ Route::get('/catalogo', [CursoController::class, 'index'])->name('site.cursos');
 Route::get('/curso/{id}', [CursoController::class, 'show'])->name('site.curso.detalhe');
 
 
+
 Route::middleware('aluno.auth')->group(function () {
     Route::get('/checkout/{curso}', [CheckoutController::class, 'start'])->name('checkout.start')->whereNumber('curso'); // <<< só números; não pega "retorno"
     // Checkout do carrinho (vários cursos)
@@ -70,6 +71,7 @@ Route::get('/checkout/retorno',[CheckoutController::class, 'retorno'])->name('ch
 Route::get('/checkout/webhook',[CheckoutController::class, 'webhook'])->name('checkout.webhook');
 
 
+Route::get('certificados/verificar/{codigo}', [StudentCertificatesController::class,'verify'])->name('certificados.verify');
 
 
 /*
@@ -129,7 +131,7 @@ Route::prefix('aluno')->name('aluno.')->group(function () {
          */
         Route::get('aulas/{aula}/progresso', [AulaProgressoController::class, 'show'])->name('aula.progresso.show');
         Route::post('aulas/{aula}/progresso', [AulaProgressoController::class, 'store'])->name('aula.progresso.store');
-        Route::get('certificados/verificar/{codigo}', [StudentCertificatesController::class,'verify'])->name('certificados.verify');
+
         /**
          * QUIZ (prova do módulo)
          */

@@ -8,10 +8,11 @@ use App\Models\Cursos;
 use App\Models\Matriculas;
 use App\Models\User;
 use App\Services\CourseCompletionService;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Psy\Util\Str;
+use App\Models\QuizTentativa;
+
 
 class StudentCertificatesController extends Controller
 {
@@ -44,60 +45,13 @@ class StudentCertificatesController extends Controller
 
     public function verify(Request $request, string $codigo)
     {
-        $cert = Certificados::where('codigo_verificacao',$codigo)->with(['matricula.curso','user'])->firstOrFail();
-        // renderiza uma página de verificação simples
+        $cert = Certificados::where('codigo_verificacao', $codigo)
+            ->with(['matricula.curso', 'matricula.aluno'])
+            ->firstOrFail();
+
         return view('site.certificado-verificar', compact('cert'));
     }
 
-//    public function baixar(Cursos $curso, Request $request)
-//    {
-//        $alunoId = auth('aluno')->id() ?? $request->session()->get('aluno_id');
-//        $matricula = Matriculas::where('aluno_id', $alunoId)
-//            ->where('curso_id', $curso->id)->firstOrFail();
-//
-//        $cert = $matricula->certificado()->firstOrFail();
-//
-//        // stream/gera o PDF (exemplo com Dompdf):
-//        $pdf = Pdf::loadView('certificados.pdf', [
-//            'aluno' => $matricula->aluno, 'curso' => $curso, 'certificado' => $cert,
-//        ])->setPaper('a4', 'landscape');
-//
-//        return $pdf->download("certificado-{$curso->id}.pdf");
-//    }
-
-//    public function baixar(Cursos $curso, Request $request)
-//    {
-//        $alunoId = auth('aluno')->id() ?? $request->session()->get('aluno_id');
-//        $matricula = Matriculas::where('aluno_id', $alunoId)
-//            ->where('curso_id', $curso->id)->firstOrFail();
-//
-//        // Caminho do background: use a imagem do template que você enviou (A4 landscape)
-//        $bgPath = public_path('certificados/template/template.jpg'); // ou .png
-//        $bgDataUri = is_file($bgPath) ? 'data:image/'.pathinfo($bgPath, PATHINFO_EXTENSION).';base64,'.base64_encode(file_get_contents($bgPath)) : null;
-//        $cert = $matricula->certificado->first();
-//        // (Opcional) Assinatura do responsável (PNG com transparência)
-////        $assinPath = public_path('certificados/assinaturas/responsavel.png');
-////        $assinData = is_file($assinPath) ? 'data:image/png;base64,'.base64_encode(file_get_contents($assinPath)) : null;
-//
-//        $data = [
-//            'aluno'        => $matricula->aluno,
-//            'curso'        => $curso,
-//            'certificado'  =>  $matricula->certificado,
-//            'alunoNome'    => $matricula->aluno->name ?? $matricula->aluno->nome,
-//            'cursoTitulo'  => $curso->titulo,
-//            'cargaHoraria' => $curso->carga_horaria ?? null,
-//            'dataEmissao'  => $cert->data_emissao,
-//            'codigo'       => $cert->codigo_verificacao,
-//            'bgDataUri'    => $bgDataUri,
-//            'assinatura1'  => ['nome' => 'Juliana Silva', 'cargo' => 'Coordenadora'],
-////            'assinaturaImgData' => $assinData,
-//        ];
-//
-//        $pdf = Pdf::loadView('certificados.template', $data)
-//            ->setPaper('a4', 'landscape');
-//
-//        return $pdf->download("certificado-{$curso->id}-{$matricula->id}.pdf");
-//    }
 
     private function findCertTemplatePath(string $relative): ?string
     {
@@ -130,91 +84,261 @@ class StudentCertificatesController extends Controller
         ]);
     }
 
+    /**
+     * Certificado 2 páginas (frente com fundo; verso desenhado).
+     * Ajustes-chave:
+     * - Sem page break automático (evita 3ª/4ª páginas).
+     * - Quadro de CARGA/NOTA/REGISTRO vai DENTRO da moldura da lista, no topo direito.
+     * - Colunas independentes (direita começa abaixo do quadro).
+     * - Assinaturas posicionadas para caber.
+     */
     private function renderCertificadoFPDF(Cursos $curso, Matriculas $matricula, Certificados $cert): string
     {
-        // Localiza o template de fundo
-        $rel    = 'certificados/template/template.jpg'; // ajuste se necessário
-        $bgPath = $this->findCertTemplatePath($rel);
-        if (!$bgPath) {
-            throw new \RuntimeException("Template do certificado não encontrado. Coloque em:
-          - public/{$rel}
-          - public/storage/{$rel} (após php artisan storage:link)
-          - storage/app/public/{$rel}");
-        }
+        // --- Caminhos (ajuste conforme seus arquivos) ---
+        $frontRel          = 'certificados/template/template2.jpeg'; // fundo da página 1
+        $logoRel           = 'images/logo2Embraur.png';              // logo (pág. 1 e 2)
+        $assinInstrutorRel = 'images/assinatura_helder.jpeg';
+        // $assinAlunoRel   = (REMOVIDO: aluno assina manualmente no espaço)
+        $assinTec1Rel      = 'images/assinatura_helder.jpeg';
+        $assinTec2Rel      = 'images/assinatura_zunei.jpeg';
 
-        // Instancia o FPDF
-        $pdf = new \FPDF('L', 'mm', 'A4'); // Landscape
+        // --- Helpers ---
+        $toPdf = fn(?string $s) => iconv('UTF-8','Windows-1252//TRANSLIT', $s ?? '');
+        $maskCpf = function (?string $cpf) {
+            $d = preg_replace('/\D/', '', (string)$cpf);
+            return strlen($d) === 11 ? substr($d,0,3).'.'.substr($d,3,3).'.'.substr($d,6,3).'-'.substr($d,9,2) : $cpf;
+        };
+        $placeImage = function(\FPDF $pdf, ?string $relPath, float $x, float $y, float $w, float $h, string $phLabel='') {
+            // Desenha imagem proporcional; se não existir, desenha uma caixa placeholder.
+            $abs = $relPath ? $this->findCertTemplatePath($relPath) : null;
+            if ($abs && is_file($abs)) {
+                [$iw,$ih] = @getimagesize($abs) ?: [0,0];
+                if ($iw && $ih) {
+                    $type = strtolower(pathinfo($abs, PATHINFO_EXTENSION)) === 'png' ? 'PNG' : 'JPG';
+                    $ratio = min($w/$iw, $h/$ih); $dw=$iw*$ratio; $dh=$ih*$ratio;
+                    $pdf->Image($abs, $x+($w-$dw)/2, $y+($h-$dh)/2, $dw, $dh, $type);
+                    return true;
+                }
+            }
+            $pdf->SetDrawColor(180,180,180); $pdf->Rect($x,$y,$w,$h);
+            if ($phLabel) { $pdf->SetFont('Arial','',9); $pdf->SetTextColor(120,120,120); $pdf->SetXY($x,$y+($h/2)-3); $pdf->Cell($w,6,$phLabel,0,0,'C'); }
+            return false;
+        };
+
+        // ========= PÁGINA 1 =========
+        $front = $this->findCertTemplatePath($frontRel);
+        if (!$front) throw new \RuntimeException("Template da frente não encontrado em public/$frontRel (ou storage/app/public/...).");
+
+        $pdf = new \FPDF('L','mm','A4');
         $pdf->AddPage();
+        $pdf->SetAutoPageBreak(false); // não cria páginas extras
 
         // Fundo
-        $type = strtolower(pathinfo($bgPath, PATHINFO_EXTENSION)) === 'png' ? 'PNG' : 'JPG';
-        $pdf->Image($bgPath, 0, 0, 297, 210, $type); // ocupa a página inteira
+        $type = strtolower(pathinfo($front, PATHINFO_EXTENSION)) === 'png' ? 'PNG' : 'JPG';
+        $pdf->Image($front, 0, 0, 297, 210, $type);
 
-        // Helper de encoding (UTF-8 -> CP1252) para evitar "?" em – “ ” ’ etc.
-        $toPdf = fn(?string $s) => iconv('UTF-8', 'Windows-1252//TRANSLIT', $s ?? '');
+        // LOGO topo (maior). Caixa ~ 90 x 32 mm
+        $placeImage($pdf, $logoRel, 103.5, 16, 90, 32, 'LOGO');
 
-        // ===== Nome do aluno =====
-        $pdf->SetFont('Arial','B',26);
-        $pdf->SetTextColor(136,152,117); // brand-500
-        $pdf->SetXY(20, 83);
-        $pdf->Cell(257, 10, $toPdf($matricula->aluno->nome_completo ?? ''), 0, 1, 'C');
+        // Caixa "CERTIFICADO" (acima do nome)
+        $pdf->SetDrawColor(0,0,0);
+        $pdf->Rect(123, 52, 60, 10);
+        $pdf->SetFont('Arial','B',12);
+        $pdf->SetXY(123, 52);
+        $pdf->Cell(60, 10, $toPdf('CERTIFICADO'), 0, 0, 'C');
 
-        // ===== Texto descritivo (centralizado; título do curso em negrito) =====
-        $pdf->SetTextColor(51,51,51);
+        // Nome (sublinhado)
+        $pdf->SetTextColor(0,0,0);
+        $pdf->SetFont('Arial','BU',28);
+        $pdf->SetXY(20, 78);
+        $pdf->Cell(257, 12, $toPdf(strtoupper($matricula->aluno->nome_completo) ?? ''), 0, 1, 'C');
+
+        // CPF (mascarado)
+        if (!empty($matricula->aluno->cpf)) {
+            $pdf->SetFont('Arial','',12);
+            $pdf->SetXY(20, 94);
+            $pdf->Cell(257, 6, $toPdf('CPF '.$maskCpf($matricula->aluno->cpf)), 0, 1, 'C');
+        }
+
+        // Texto do curso (com NOME DO CURSO em negrito, centralizado em 2 linhas)
         $pdf->SetFont('Arial','',12);
-
-        $blockW  = 200;                                   // largura do parágrafo (mm)
-        $textY   = 112;                                   // Y do parágrafo
-        $pageW   = $pdf->GetPageWidth();
-        $blockX  = ($pageW - $blockW) / 2;                // centraliza horizontalmente
-
-        $parte1 = "Este certificado é apresentado a ".($matricula->aluno->nome_completo ?? '')
-            ." por ter concluído o curso ";
-        $titulo = "\"{$curso->titulo}\"";
-        $parte2 = $curso->carga_horaria_total
-            ? " com carga horária de {$curso->carga_horaria_total} horas."
-            : ".";
-
-        // normaliza aspas curvas e converte encoding
-        $norm   = fn($t) => $toPdf(str_replace(['“','”','’'], ['"','"',"'" ], $t));
-        $parte1 = $norm($parte1);
-        $titulo = $norm($titulo);
-        $parte2 = $norm($parte2);
-
-        // bloco central
-        $origLeft = 10; $origRight = 10; // se usa outras margens globais, ajuste
-        $pdf->SetLeftMargin($blockX);
-        $pdf->SetRightMargin($blockX);
-        $pdf->SetXY($blockX, $textY);
-        $pdf->Write(7, $parte1);
-        $pdf->SetFont('Arial','B',12);   // destaque só no TÍTULO
-        $pdf->Write(7, $titulo);
+        $pdf->SetXY(25, 105);
+        $pdf->Cell(247, 6, $toPdf('Certificamos que o aluno concluiu com aproveitamento o curso de'), 0, 2, 'C');
+        $pdf->SetFont('Arial','B',12);
+        $pdf->Cell(247, 6, $toPdf($curso->titulo), 0, 2, 'C');
         $pdf->SetFont('Arial','',12);
-        $pdf->Write(7, $parte2);
-        $pdf->Ln(10);
-        $pdf->SetLeftMargin($origLeft);
-        $pdf->SetRightMargin($origRight);
+        $pdf->Cell(247, 6, $toPdf('com carga horária de '.$curso->carga_horaria_total.' horas concluído em:'), 0, 2, 'C');
 
-        // ===== Data (sobre o pontilhado) =====
-        $dateStr = $cert->data_emissao ? $cert->data_emissao->format('d/m/Y') : date('d/m/Y');
+        // Período (APENAS a linha "De XX a YY" dentro da caixa)
+        $fmt = fn($d) => $d ? $d->format('d/m/Y') : '—';
+        $inicio = $matricula->data_inicio ?? $cert->data_emissao ?? $matricula->created_at ?? now();
+        $fim    = $matricula->data_fim    ?? $cert->data_emissao ?? $inicio;
+
+        $pdf->SetDrawColor(120,120,120);
+        $pdf->Rect(98, 123, 101, 10);
         $pdf->SetFont('Arial','',11);
-        $pdf->SetTextColor(33,33,33);
-        $pdf->SetXY(64, 162);                 // ajuste fino se necessário
-        $pdf->Cell(52, 6, $toPdf($dateStr), 0, 0, 'C');
+        $pdf->SetXY(98, 123);
+        $pdf->Cell(101, 10, $toPdf('De '.$fmt($inicio).' a '.$fmt($fim)), 0, 0, 'C');
 
-        // ===== Assinatura (linha + nome/cargo no lado direito) =====
-        $pdf->SetXY(297-38-70, 170);
-        $pdf->Cell(70, 0, '', 'T'); // linha
-        $pdf->Ln(2);
-        $pdf->SetX(297-38-70);
-        $pdf->SetFont('Arial','B',10);
-        $pdf->Cell(70, 5, $toPdf('Responsável'), 0, 2, 'C');
-        $pdf->SetFont('Arial','',9);
-        $pdf->Cell(70, 5, $toPdf('Cargo / Conselho'), 0, 2, 'C');
+        // Assinaturas: instrutor (com imagem) e aluno (SÓ espaço/linha)
+        $assinYImg = 150; $assinHImg = 18; $linhaY = 170; $wAssin = 100;
+        $xEsq = 30; $xDir = 297 - 30 - $wAssin;
 
-        // Retorna os bytes do PDF (sem enviar headers)
+        // Instrutor
+        $placeImage($pdf, $assinInstrutorRel, $xEsq+25, $assinYImg, 50, $assinHImg, '');
+        $pdf->SetDrawColor(0,0,0);
+        $pdf->SetXY($xEsq, $linhaY); $pdf->Cell($wAssin, 0, '', 'T');
+        $pdf->SetFont('Arial','',10);
+        $pdf->SetXY($xEsq, $linhaY+2); $pdf->Cell($wAssin, 5, $toPdf('Instrutor'), 0, 0, 'C');
+
+        // Aluno (sem imagem pré-definida)
+        $pdf->SetXY($xDir, $linhaY); $pdf->Cell($wAssin, 0, '', 'T');
+        $pdf->SetXY($xDir, $linhaY+2); $pdf->Cell($wAssin, 5, $toPdf('Aluno(a)'), 0, 0, 'C');
+
+        // ========= PÁGINA 2 =========
+        $pdf->AddPage();
+        $pdf->SetAutoPageBreak(false);
+
+        // Logo topo (direita)
+        $placeImage($pdf, $logoRel, 215, 12, 60, 22, 'LOGO');
+
+        // Títulos
+        $pdf->SetTextColor(0,0,0);
+        $pdf->SetFont('Arial','B',14);
+        $pdf->SetXY(20, 18); $pdf->Cell(170, 8, $toPdf('Conteúdo Ministrado:'), 0, 1, 'L');
+        $sub = $curso->sigla ?? $curso->titulo;
+        if ($sub) { $pdf->SetFont('Arial','',12); $pdf->SetXY(20, 26); $pdf->Cell(170, 7, $toPdf($sub), 0, 1, 'L'); }
+
+        // Moldura da lista
+        $pdf->SetDrawColor(120,120,120); $pdf->Rect(14, 34, 269, 118);
+
+        // === Quadro CARGA / NOTA / REGISTRO dentro da moldura (topo direito) ===
+        // Nota = média (0–10) das melhores tentativas por quiz do curso para este aluno.
+        $nota10 = null;
+
+        try {
+            // ✅ qualifica o campo e usa distinct para evitar IDs repetidos
+            $quizIds = $curso->quizzes()
+                ->select('quizzes.id')
+                ->distinct()
+                ->pluck('quizzes.id');
+
+            if ($quizIds->isNotEmpty()) {
+                $tents = QuizTentativa::where('aluno_id', $matricula->aluno_id)
+                    ->whereIn('quiz_id', $quizIds)
+                    ->get();
+
+                $best = [];
+                foreach ($tents as $t) {
+                    if (($t->nota_maxima ?? 0) > 0) {
+                        $ratio = (float)$t->nota_obtida / (float)$t->nota_maxima; // 0..1
+                        $q = (int)$t->quiz_id;
+                        if (!isset($best[$q]) || $ratio > $best[$q]) {
+                            $best[$q] = $ratio;
+                        }
+                    }
+                }
+
+                if ($best) {
+                    $nota10 = round((array_sum($best) / count($best)) * 10, 1);
+                }
+            }
+        } catch (\Throwable $e) {
+            \Log::error($e);
+        }
+        $notaDisplay = $nota10 !== null
+            ? number_format($nota10, 1, ',', '')
+            : ($cert->nota_aproveitamento !== null ? number_format((float)$cert->nota_aproveitamento, 1, ',', '') : '—');
+
+        $statsX = 14 + 269 - 98; $statsY = 38;
+        $pdf->SetXY($statsX, $statsY);
+        $pdf->SetFont('Arial','',11);
+        $pdf->Cell(60, 6, $toPdf('CARGA TOTAL:'), 0, 0, 'L');
+        $pdf->SetFont('Arial','B',11);
+        $pdf->Cell(30, 6, $toPdf(($curso->carga_horaria_total ?? '').'h'), 0, 1, 'L');
+
+        $pdf->SetXY($statsX, $statsY+8);
+        $pdf->SetFont('Arial','',11);
+        $pdf->Cell(60, 6, $toPdf('NOTA DE APROVEITAMENTO:'), 0, 0, 'L');
+        $pdf->SetFont('Arial','B',11);
+        $pdf->Cell(30, 6, $toPdf($notaDisplay), 0, 1, 'L');
+
+        $pdf->SetXY($statsX, $statsY+16);
+        $pdf->SetFont('Arial','',11);
+        $pdf->Cell(60, 6, $toPdf('REGISTRO'), 0, 0, 'L');
+        $pdf->SetFont('Arial','B',11);
+        $pdf->Cell(30, 6, $toPdf($cert->codigo_verificacao ?? ''), 0, 1, 'L');
+
+        // Lista de módulos (2 colunas; direita começa mais baixo p/ não colidir com o quadro)
+        $modulos = [];
+        if (method_exists($curso,'modulos')) { try { $modulos = $curso->modulos()->orderBy('ordem')->pluck('titulo')->toArray(); } catch (\Throwable $e) {} }
+        if (!$modulos && !empty($curso->conteudo_programatico)) {
+            $modulos = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $curso->conteudo_programatico))));
+        }
+
+        $pdf->SetTextColor(20,20,20); $pdf->SetFont('Arial','',11);
+        $xL=20; $xR=150; $yL=40; $yR=64; $colW=130; $lineH=6; $maxY=146; $i=1;
+        foreach ($modulos as $m) {
+            if ($yL <= $maxY) { $pdf->SetXY($xL,$yL); $pdf->MultiCell($colW,$lineH,$toPdf(($i++).'. '.$m),0,'L'); $yL=$pdf->GetY(); }
+            else { if ($yR > $maxY) break; $pdf->SetXY($xR,$yR); $pdf->MultiCell($colW-2,$lineH,$toPdf(($i++).'. '.$m),0,'L'); $yR=$pdf->GetY(); }
+        }
+
+        // Corpo técnico + assinaturas (cabem antes do fim da página)
+        $pdf->SetFont('Arial','B',12);
+        $pdf->SetXY(20, 158); $pdf->Cell(120, 7, $toPdf('Corpo Técnico:'), 0, 2, 'L');
+
+
+        $tec = [
+            ['img'=>$assinTec1Rel, 'nome'=>config('certificados.corpo_tecnico.0.nome')  ?? 'Helder Votri Rosso',
+                'cargo'=>config('certificados.corpo_tecnico.0.cargo') ?? 'Eng. Eletricista / Seg. do Trabalho – CREA-SC 130455-2', 'x'=>25],
+            ['img'=>$assinTec2Rel, 'nome'=>config('certificados.corpo_tecnico.1.nome')  ?? 'Zunei Votri',
+                'cargo'=>config('certificados.corpo_tecnico.1.cargo') ?? 'Enfermeiro – COREN-SC 201310', 'x'=>120],
+        ];
+
+
+        // === QR CODE (canto direito inferior do conteúdo, dentro da área em vermelho) ===
+        // URL absoluta para a verificação (usa APP_URL)
+        // URL do QR
+        $qrUrl = route('certificados.verify', $cert->codigo_verificacao);
+
+        // gera o PNG em memória
+        $qr = QrCode::create($qrUrl)->setSize(350)->setMargin(1);
+        $writer = new PngWriter();
+        $result = $writer->write($qr);
+
+        // salva num arquivo temporário e insere no PDF
+        $tmpDir = storage_path('app/tmp'); if (!is_dir($tmpDir)) @mkdir($tmpDir, 0775, true);
+        $qrPath = $tmpDir.'/qr-'.$cert->codigo_verificacao.'.png';
+        $result->saveToFile($qrPath);
+
+        // posicione onde está o retângulo vermelho (ajuste se precisar)
+        $qrX = 242;  // mm
+        $qrY = 155;  // mm
+        $qrW = 45;   // mm
+        $pdf->Image($qrPath, $qrX, $qrY, $qrW, 0, 'PNG');
+
+        // Rótulo pequeno abaixo do QR (opcional)
+        $pdf->SetFont('Arial','',8);
+        $pdf->SetXY($qrX, $qrY + $qrW + 2);
+        $pdf->Cell($qrW, 4, $toPdf('Verificação: '.$cert->codigo_verificacao), 0, 0, 'C');
+
+
+
+        foreach ($tec as $b) {
+            $x0=(float)$b['x']; $w=80;
+            $placeImage($pdf, $b['img'], $x0+15, 166, 50, 16, '');
+            $pdf->SetDrawColor(0,0,0);
+            $pdf->SetXY($x0, 184); $pdf->Cell($w, 0, '', 'T');
+            $pdf->SetFont('Arial','B',10); $pdf->SetXY($x0, 186); $pdf->Cell($w, 5, $toPdf($b['nome']), 0, 2, 'C');
+            $pdf->SetFont('Arial','',9);  $pdf->Cell($w, 5, $toPdf($b['cargo']), 0, 2, 'C');
+        }
+
         return $pdf->Output('S');
     }
+
+
+
+
 
     public function issue(Request $request, Cursos $curso)
     {
