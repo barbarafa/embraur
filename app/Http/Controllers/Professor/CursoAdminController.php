@@ -201,6 +201,7 @@ class CursoAdminController extends Controller
             'modulos.*.aulas.*.duracao_minutos'    => ['nullable','integer','min:0'],
             'modulos.*.aulas.*.tipo'               => ['required_with:modulos.*.aulas.*', Rule::in(['video','texto','quiz','arquivo'])],
             'modulos.*.aulas.*.conteudo_url'       => ['nullable','string','max:255'],
+            'modulos.*.aulas.*.conteudo_texto'       => ['nullable','string'],
             'modulos.*.aulas.*.descricao'     => ['nullable','string'],
             'modulos.*.aulas.*.liberada_apos_anterior' => ['nullable','boolean'],
             'modulos.*.aulas.*.quiz_id'            => ['nullable','exists:quizzes,id'],

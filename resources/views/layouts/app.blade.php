@@ -149,7 +149,7 @@
             </ul>
         </div>
     </div>
-    <div class="text-center text-xs text-slate-500 py-4 border-t">© 2024 Embraur. Todos os direitos reservados.</div>
+    <div class="text-center text-xs text-slate-500 py-4 border-t">© 2025 Embraur. Todos os direitos reservados.</div>
 
     {{-- WHATSAPP FLUTUANTE (lado direito) --}}
     <div class="fixed right-5 bottom-5 flex flex-col items-end gap-3 z-50">
