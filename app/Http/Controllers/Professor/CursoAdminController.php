@@ -62,7 +62,7 @@ class CursoAdminController extends Controller
             // estrutura
             'modulos'                              => ['nullable','array'],
             'modulos.*.titulo'                     => ['required','string','max:255'],
-            'modulos.*.descricao_curta'            => ['nullable','string'],
+            'modulos.*.descricao'            => ['nullable','string'],
             'modulos.*.aulas'                      => ['nullable','array'],
             'modulos.*.aulas.*.titulo'             => ['required_with:modulos.*.aulas.*','string','max:255'],
             'modulos.*.aulas.*.duracao_minutos'    => ['nullable','integer','min:0'],
@@ -197,7 +197,7 @@ class CursoAdminController extends Controller
             'modulos'                              => ['nullable','array'],
             'modulos.*.id'                         => ['nullable','exists:modulos,id'],
             'modulos.*.titulo'                     => ['required','string','max:255'],
-            'modulos.*.descricao_curta'                  => ['nullable','string'],
+            'modulos.*.descricao'                  => ['nullable','string'],
             'modulos.*.aulas'                      => ['nullable','array'],
             'modulos.*.aulas.*.id'                 => ['nullable','exists:aulas,id'],
             'modulos.*.aulas.*.titulo'             => ['required_with:modulos.*.aulas.*','string','max:255'],

@@ -38,7 +38,7 @@
                 <a href="#sec-estrutura" class="px-3 py-1 rounded-full border hover:bg-slate-50">2. Estrutura</a>
             </div>
 
-            {{--
+
             <div class="hidden md:flex items-center gap-2">
                 <button type="submit" form="cursoForm" name="salvar" value="rascunho" class="btn btn-outline h-9">
                     Salvar como Rascunho
@@ -47,7 +47,7 @@
                     {{ ($mode ?? 'create') === 'edit' ? 'Salvar Alterações' : 'Criar Curso' }}
                 </button>
             </div>
-            --}}
+
         </div>
     </nav>
 
@@ -97,14 +97,16 @@
             <div class="md:col-span-2">
                 <label class="text-sm font-medium">Descrição Curta</label>
                 <textarea
-                    name="descricao_curta"
-                    id="descricao_curta"
+                    name="descricao"
+                    id="descricao"
                     class="js-ckeditor mt-1 w-full rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
                     rows="4"
                     placeholder="Escreva um resumo do curso "
-                >{{ old('descricao_curta', $curso->descricao_curta) }}</textarea>
+                >{{ old('descricao', $curso->descricao) }}</textarea>
             </div>
             --}}
+
+
 
             <div class="md:col-span-2">
                 <label class="text-sm font-medium">Descrição Completa</label>
