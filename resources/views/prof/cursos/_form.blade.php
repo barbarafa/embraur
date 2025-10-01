@@ -239,7 +239,7 @@
                             <div class="md:col-span-2">
                                 <label class="text-sm font-medium">Descrição do Módulo</label>
                                 <textarea name="modulos[{{ $mIdx }}][descricao]"
-                                          class=" js-ckeditor mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                                          class="js-ckeditor mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
                                           rows="4"
                                 >{{ old("modulos.$mIdx.descricao", $modulo->descricao) }}</textarea>
                             </div>
@@ -374,9 +374,120 @@
 {{-- JS: preview, colapsar módulos, numerar e atalhos (sem mudanças de seletor) --}}
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 <script>
+    (() => {
+        /* =========================================================
+         *  CKEDITOR: inicializador idempotente (reutilizável)
+         * =======================================================*/
+        const UPLOAD_URL = "{{ route('prof.uploads.ckeditor') }}?_token={{ csrf_token() }}";
 
-    (function(){
-        // preview imagem
+        const htmlSupport = {
+            allow: [{ name: /^(video|source)$/, attributes: true, classes: true, styles: true }]
+        };
+
+        const mediaEmbed = {
+            previewsInData: true,
+            extraProviders: [
+                {
+                    name: 'localVideo',
+                    url: /^https?:\/\/[^ ]+\.(mp4|webm|ogg)$/i,
+                    html: match => {
+                        const url = match[0];
+                        const ext = (url.split('.').pop() || '').toLowerCase();
+                        const type = ext === 'ogv' ? 'ogg' : ext;
+                        return `<video controls style="max-width:100%;height:auto;"><source src="${url}" type="video/${type}"></video>`;
+                    }
+                }
+            ]
+        };
+
+        const toolbar = [
+            'undo','redo','|',
+            'heading','|',
+            'bold','italic','underline','link','|',
+            'bulletedList','numberedList','blockQuote','|',
+            'insertTable','imageUpload','mediaEmbed','|',
+            'alignment','outdent','indent','|',
+            'codeBlock','horizontalLine'
+        ];
+
+        function initCKEditorsIn(root = document) {
+            root.querySelectorAll('textarea.js-ckeditor').forEach((el) => {
+                // bloqueios: já pronto OU pendente de inicialização
+                if (el.hasAttribute('data-cke-ready') || el.hasAttribute('data-cke-pending')) return;
+
+                // marca como pendente ANTES de chamar o create()
+                el.setAttribute('data-cke-pending','1');
+
+                ClassicEditor.create(el, {
+                    language: 'pt-br',
+                    toolbar: { items: toolbar },
+                    ckfinder: { uploadUrl: UPLOAD_URL },
+                    mediaEmbed,
+                    htmlSupport,
+                    removePlugins: ['CKBox','CKFinder','EasyImage']
+                })
+                    .then((editor) => {
+                        // guarda a instância para poder destruir depois
+                        el._ckeditor = editor;
+
+                        el.removeAttribute('data-cke-pending');
+                        el.setAttribute('data-cke-ready','1');
+
+                        // auto-mediaEmbed para vídeos enviados
+                        const fileRepo = editor.plugins.get('FileRepository');
+                        const origCreateAdapter = fileRepo.createUploadAdapter.bind(fileRepo);
+                        fileRepo.createUploadAdapter = loader => {
+                            const adapter = origCreateAdapter(loader);
+                            const origUpload = adapter.upload?.bind(adapter);
+                            if (!origUpload) return adapter;
+                            adapter.upload = async () => {
+                                const res = await origUpload();
+                                try {
+                                    const url = res?.default ?? res?.url ?? res?.urls?.default ?? res?.url;
+                                    if (url && /\.(mp4|webm|ogg)$/i.test(url)) {
+                                        editor.execute('mediaEmbed', url);
+                                        return { default: url };
+                                    }
+                                } catch(e) {}
+                                return res;
+                            };
+                            return adapter;
+                        };
+                    })
+                    .catch((e) => {
+                        el.removeAttribute('data-cke-pending');
+                        console.error(e);
+                    });
+            });
+        }
+
+        // Exponha globalmente para uso após inserções dinâmicas
+        window.initCKEditorsIn = initCKEditorsIn;
+
+        // Inicializa os que já estão na página
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => initCKEditorsIn(document));
+        } else {
+            initCKEditorsIn(document);
+        }
+
+        // (Opcional) Observa novos nós e inicializa automaticamente
+        const observer = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                for (const node of m.addedNodes) {
+                    if (!(node instanceof Element)) continue;
+                    if (node.matches?.('textarea.js-ckeditor') || node.querySelector?.('textarea.js-ckeditor')) {
+                        initCKEditorsIn(node);
+                    }
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        /* =========================================================
+         *  UI: preview imagem + módulos/aulas dinâmicos
+         * =======================================================*/
+        // Preview imagem de capa
         const imgInput = document.getElementById('imagemCapa');
         if (imgInput) {
             imgInput.addEventListener('change', e => {
@@ -399,7 +510,7 @@
             });
         }
 
-        // remover módulo
+        // Remover módulo
         window.removeModulo = function(btn){
             const card = btn.closest('[data-modulo]');
             if (!card) return;
@@ -407,7 +518,7 @@
             renumberModules();
         };
 
-        // colapsar/expandir
+        // Colapsar/expandir
         function setExpanded(card, expanded){
             const btn = card.querySelector('.toggle-modulo');
             const body = card.querySelector('.modulo-body');
@@ -433,89 +544,86 @@
             modWrap.querySelectorAll('[data-modulo]').forEach(card=> setExpanded(card, false));
         });
 
-        // templates
+        // Templates
         function moduloTemplate(idx){
             return `
-      <div class="rounded-lg border p-0 overflow-hidden" data-modulo="${idx}">
-        <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b">
-          <div class="flex items-center gap-3">
-            <button type="button" class="toggle-modulo h-8 w-8 rounded-md border bg-white hover:bg-slate-100 grid place-items-center" aria-expanded="true"><span class="i">▾</span></button>
-            <div>
-              <h3 class="font-semibold">Módulo <span class="mod-num">${idx+1}</span></h3>
-              <div class="mt-1"><span class="pill bg-slate-100 text-slate-700 border border-slate-200">⏳ Sem prova</span></div>
-            </div>
-          </div>
-          <button type="button" class="text-red-600 hover:underline" onclick="window.removeModulo(this)">Remover</button>
-        </div>
-        <div class="modulo-body p-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <div class="md:col-span-2">
-              <label class="text-sm font-medium">Título do Módulo</label>
-              <input name="modulos[${idx}][titulo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
-            </div>
-            <div class="md:col-span-2">
-              <label class="text-sm font-medium">Descrição do Módulo</label>
-              <textarea name="modulos[${idx}][descricao]" rows="3" class="js-ckeditor mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"></textarea>
-            </div>
-          </div>
-          <div class="space-y-6" data-aulas></div>
-          <div class="mt-4 flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-2">
-              <button type="button" class="btn btn-outline" data-action="add-aula">＋ Adicionar Aula</button>
-              <span class="btn btn-soft opacity-60 cursor-not-allowed" title="Salve o curso para criar a prova">✏️ Criar Prova do Módulo</span>
-            </div>
-            <span class="text-xs text-slate-500">Organize as aulas e cadastre a prova do módulo quando estiver pronto</span>
-          </div>
-        </div>
+<div class="rounded-lg border p-0 overflow-hidden" data-modulo="${idx}">
+  <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b">
+    <div class="flex items-center gap-3">
+      <button type="button" class="toggle-modulo h-8 w-8 rounded-md border bg-white hover:bg-slate-100 grid place-items-center" aria-expanded="true"><span class="i">▾</span></button>
+      <div>
+        <h3 class="font-semibold">Módulo <span class="mod-num">${idx+1}</span></h3>
+        <div class="mt-1"><span class="pill bg-slate-100 text-slate-700 border border-slate-200">⏳ Sem prova</span></div>
       </div>
-    `;
+    </div>
+    <button type="button" class="text-red-600 hover:underline" onclick="window.removeModulo(this)">Remover</button>
+  </div>
+  <div class="modulo-body p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+      <div class="md:col-span-2">
+        <label class="text-sm font-medium">Título do Módulo</label>
+        <input name="modulos[${idx}][titulo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-sm font-medium">Descrição do Módulo</label>
+        <textarea name="modulos[${idx}][descricao]" rows="3" class="js-ckeditor mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"></textarea>
+      </div>
+    </div>
+    <div class="space-y-6" data-aulas></div>
+    <div class="mt-4 flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-2">
+        <button type="button" class="btn btn-outline" data-action="add-aula">＋ Adicionar Aula</button>
+        <span class="btn btn-soft opacity-60 cursor-not-allowed" title="Salve o curso para criar a prova">✏️ Criar Prova do Módulo</span>
+      </div>
+      <span class="text-xs text-slate-500">Organize as aulas e cadastre a prova do módulo quando estiver pronto</span>
+    </div>
+  </div>
+</div>`;
         }
+
         function aulaTemplate(mIdx, aIdx){
             return `
-      <div class="aula-card grid grid-cols-1 md:grid-cols-4 gap-3 border rounded-md p-3 bg-white" data-aula="${aIdx}">
-        <div class="md:col-span-2">
-          <label class="text-sm font-medium">Título da Aula</label>
-          <input name="modulos[${mIdx}][aulas][${aIdx}][titulo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: Criando componentes">
-        </div>
-        <div>
-          <label class="text-sm font-medium">Duração (min)</label>
-          <input type="number" min="0" step="1" name="modulos[${mIdx}][aulas][${aIdx}][duracao_minutos]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: 15">
-        </div>
-        <div>
-          <label class="text-sm font-medium">Tipo</label>
-          <select name="modulos[${mIdx}][aulas][${aIdx}][tipo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
-            <option value="video">Vídeo</option>
-            <option value="texto">Texto</option>
-            <option value="arquivo">Arquivo</option>
-          </select>
-        </div>
-        <div class="md:col-span-4">
-          <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
-           <textarea
-             name="modulos[${mIdx}][aulas][${aIdx}][descricao]"
-             class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
-             rows="5"
-             placeholder="Descreva os pontos principais desta aula..."
-           ></textarea>
-
-        />
-        </div>
-        <div class="md:col-span-3">
-          <label class="text-sm font-medium">URL do Conteúdo (opcional)</label>
-          <input name="modulos[${mIdx}][aulas][${aIdx}][conteudo_url]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="https://...">
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="checkbox" name="modulos[${mIdx}][aulas][${aIdx}][liberada_apos_anterior]" value="1" class="h-4 w-4 border border-slate-300">
-          <label class="text-sm">Liberar só após concluir aula anterior</label>
-        </div>
-        <div class="md:col-span-4 text-right">
-          <button type="button" class="text-red-600 hover:underline" data-action="remove-aula">Remover aula</button>
-        </div>
-      </div>
-    `;
+<div class="aula-card grid grid-cols-1 md:grid-cols-4 gap-3 border rounded-md p-3 bg-white" data-aula="${aIdx}">
+  <div class="md:col-span-2">
+    <label class="text-sm font-medium">Título da Aula</label>
+    <input name="modulos[${mIdx}][aulas][${aIdx}][titulo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: Criando componentes">
+  </div>
+  <div>
+    <label class="text-sm font-medium">Duração (min)</label>
+    <input type="number" min="0" step="1" name="modulos[${mIdx}][aulas][${aIdx}][duracao_minutos]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: 15">
+  </div>
+  <div>
+    <label class="text-sm font-medium">Tipo</label>
+    <select name="modulos[${mIdx}][aulas][${aIdx}][tipo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
+      <option value="video">Vídeo</option>
+      <option value="texto">Texto</option>
+      <option value="arquivo">Arquivo</option>
+    </select>
+  </div>
+  <div class="md:col-span-4">
+    <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
+    <textarea
+      name="modulos[${mIdx}][aulas][${aIdx}][conteudo_texto]"
+      class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
+      rows="5"
+      placeholder="Descreva os pontos principais desta aula..."
+    ></textarea>
+  </div>
+  <div class="md:col-span-3">
+    <label class="text-sm font-medium">URL do Conteúdo (opcional)</label>
+    <input name="modulos[${mIdx}][aulas][${aIdx}][conteudo_url]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="https://...">
+  </div>
+  <div class="flex items-center gap-2">
+    <input type="checkbox" name="modulos[${mIdx}][aulas][${aIdx}][liberada_apos_anterior]" value="1" class="h-4 w-4 border border-slate-300">
+    <label class="text-sm">Liberar só após concluir aula anterior</label>
+  </div>
+  <div class="md:col-span-4 text-right">
+    <button type="button" class="text-red-600 hover:underline" data-action="remove-aula">Remover aula</button>
+  </div>
+</div>`;
         }
 
-        // índice do módulo pelo name=modulos[idx]
+        // util: recuperar índice do módulo pelo name
         function getModuloIndexFromNames(card){
             const any = card.querySelector('input[name^="modulos["], textarea[name^="modulos["], select[name^="modulos["]');
             const m = any?.name.match(/^modulos\[(\d+)\]/);
@@ -533,8 +641,7 @@
                 if (!cont) return console.warn('Container de aulas não encontrado para módulo', mIdx);
                 const next = cont.querySelectorAll('[data-aula]').length;
                 cont.insertAdjacentHTML('beforeend', aulaTemplate(mIdx, next));
-                // Inicializa CKEditor nos itens adicionados
-                window.createCKEditorsIn?.(cont);
+                window.initCKEditorsIn(cont); // inicializa CK nos novos textareas
                 return;
             }
             const rm = e.target.closest('[data-action="remove-aula"]');
@@ -544,111 +651,20 @@
             }
         });
 
-        // adicionar módulo
+        // Adicionar módulo
         function addModulo(){
             const idx = modWrap.querySelectorAll('[data-modulo]').length;
             modWrap.insertAdjacentHTML('beforeend', moduloTemplate(idx));
             const card = modWrap.querySelector('[data-modulo]:last-child');
             bindModule(card);
             renumberModules();
-            // Inicializa CKEditor no novo módulo
-            window.createCKEditorsIn?.(card);
+            window.initCKEditorsIn(card); // inicializa CK no novo módulo
         }
         addModuloBtn?.addEventListener('click', addModulo);
-    })();
-
-</script>
-
-
-<script>
-    (function () {
-
-        const UPLOAD_URL = "{{ route('prof.uploads.ckeditor') }}?_token={{ csrf_token() }}";
-
-        // Permite <video> e <source> no conteúdo
-        const htmlSupport = {
-            allow: [
-                { name: /^(video|source)$/, attributes: true, classes: true, styles: true }
-            ]
-        };
-
-        // MediaEmbed com player também para .mp4/.webm/.ogg hospedados por você
-        const mediaEmbed = {
-            previewsInData: true,
-            extraProviders: [
-                {
-                    name: 'localVideo',
-                    // link terminando com .mp4/.webm/.ogg
-                    url: /^https?:\/\/[^ ]+\.(mp4|webm|ogg)$/i,
-                    html: match => {
-                        const url = match[0];
-                        const ext = (url.split('.').pop() || '').toLowerCase();
-                        const type = ext === 'ogv' ? 'ogg' : ext;
-                        return `<video controls style="max-width:100%;height:auto;">
-                    <source src="${url}" type="video/${type}">
-                  </video>`;
-                    }
-                }
-            ]
-        };
-
-        const toolbar = [
-            'undo','redo','|',
-            'heading','|',
-            'bold','italic','underline','link','|',
-            'bulletedList','numberedList','blockQuote','|',
-            'insertTable','imageUpload','mediaEmbed','|',
-            'alignment','outdent','indent','|',
-            'codeBlock','horizontalLine'
-        ];
-
-        // Cria todos os .js-ckeditor da página
-        document.querySelectorAll('textarea.js-ckeditor').forEach((el) => {
-            ClassicEditor.create(el, {
-                language: 'pt-br',
-                toolbar: { items: toolbar },
-                ckfinder: { uploadUrl: UPLOAD_URL },   // ← upload direto (imagem/vídeo/qualquer arquivo)
-                mediaEmbed,
-                htmlSupport,
-                // se a sua build vier com esses plugins e você não quiser usar, remova daqui:
-                removePlugins: ['CKBox','CKFinder','EasyImage']
-            })
-                .then((editor) => {
-                    // Dica: se arrastar soltar um .mp4, o CKEditor envia ao UPLOAD_URL.
-                    // Depois é só colar a URL na linha e usar mediaEmbed: o preview vira <video> automaticamente.
-                    // Para facilitar, sempre que subir vídeo a gente já insere o player:
-                    const fileRepo = editor.plugins.get('FileRepository');
-
-                    // Sobrescreve a renderização pós-upload de vídeo: insere como mediaEmbed
-                    const origCreateAdapter = fileRepo.createUploadAdapter.bind(fileRepo);
-                    fileRepo.createUploadAdapter = loader => {
-                        const adapter = origCreateAdapter(loader);
-                        const origUpload = adapter.upload?.bind(adapter);
-                        // Se for o adapter padrão do ckfinder, terá upload(); senão, só retorna o adapter
-                        if (!origUpload) return adapter;
-
-                        adapter.upload = async () => {
-                            const res = await origUpload();
-                            try {
-                                const url = res?.default ?? res?.url ?? res?.urls?.default ?? res?.url;
-                                if (url && /\.(mp4|webm|ogg)$/i.test(url)) {
-                                    // insere um media embed com o vídeo local
-                                    editor.execute('mediaEmbed', url);
-                                    // retorna algo "inofensivo" pro fluxo de upload de imagem
-                                    return { default: url };
-                                }
-                            } catch(e) {}
-                            return res;
-                        };
-                        return adapter;
-                    };
-
-                })
-                .catch(console.error);
-        });
 
     })();
 </script>
+
 
 
 {{--@endsection--}}
