@@ -132,11 +132,11 @@
                 </select>
             </div>
             <div>
-                <label class="text-sm font-medium">Preço original (R$)</label>
-                <input name="preco_original"
-                       value="{{ old('preco_original', $curso->preco_original) }}"
-                       type="number" min="0" step="0.01" placeholder="Ex.: 99,90"
-                       class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
+            <label class="text-sm font-medium">Preço original (R$)</label>
+            <input name="preco_original"
+                   value="{{ old('preco_original', $curso->preco_original) }}"
+                   type="number" min="0" step="0.01" placeholder="Ex.: 99,90"
+                   class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
             </div>
             <div>
 
@@ -235,14 +235,11 @@
                                        class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="text-sm font-medium">Descrição Curta</label>
-                                <textarea
-                                    name="descricao_curta"
-                                    id="descricao_curta"
-                                    class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
-                                    rows="4"
-                                    placeholder="Escreva um resumo do curso"
-                                >{{ old('descricao_curta', $curso->descricao_curta) }}</textarea>
+                                <label class="text-sm font-medium">Descrição do Módulo</label>
+                                <textarea name="modulos[{{ $mIdx }}][descricao]"
+                                          class=" js-ckeditor mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                                          rows="4"
+                                >{{ old("modulos.$mIdx.descricao", $modulo->descricao) }}</textarea>
                             </div>
                         </div>
 
@@ -287,6 +284,9 @@
                                             class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
                                             rows="5"
                                         >{{ old("modulos.$mIdx.aulas.$aIdx.descricao", $aula->conteudo_texto) }}</textarea>
+
+
+
                                     </div>
 
                                     <div class="md:col-span-3">
@@ -470,18 +470,18 @@
         }
         function aulaTemplate(mIdx, aIdx){
             return `
-      <div class="aula-card grid grid-cols-1 md:grid-cols-4 gap-3 border rounded-md p-3 bg-white" data-aula="\${aIdx}">
+      <div class="aula-card grid grid-cols-1 md:grid-cols-4 gap-3 border rounded-md p-3 bg-white" data-aula="${aIdx}">
         <div class="md:col-span-2">
           <label class="text-sm font-medium">Título da Aula</label>
-          <input name="modulos[\${mIdx}][aulas][\${aIdx}][titulo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: Criando componentes">
+          <input name="modulos[${mIdx}][aulas][${aIdx}][titulo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: Criando componentes">
         </div>
         <div>
           <label class="text-sm font-medium">Duração (min)</label>
-          <input type="number" min="0" step="1" name="modulos[\${mIdx}][aulas][\${aIdx}][duracao_minutos]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: 15">
+          <input type="number" min="0" step="1" name="modulos[${mIdx}][aulas][${aIdx}][duracao_minutos]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="Ex: 15">
         </div>
         <div>
           <label class="text-sm font-medium">Tipo</label>
-          <select name="modulos[\${mIdx}][aulas][\${aIdx}][tipo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
+          <select name="modulos[${mIdx}][aulas][${aIdx}][tipo]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
             <option value="video">Vídeo</option>
             <option value="texto">Texto</option>
             <option value="arquivo">Arquivo</option>
@@ -489,19 +489,21 @@
         </div>
         <div class="md:col-span-4">
           <label class="text-sm font-medium">Descrição da Aula (opcional)</label>
-          <textarea
-            name="modulos[\${mIdx}][aulas][\${aIdx}][conteudo_texto]"
-            class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
-            rows="5"
-            placeholder="Descreva os pontos principais desta aula..."
-          ></textarea>
+           <textarea
+             name="modulos[${mIdx}][aulas][${aIdx}][descricao]"
+             class="js-ckeditor mt-1 w-full rounded-md border border-slate-300"
+             rows="5"
+             placeholder="Descreva os pontos principais desta aula..."
+           ></textarea>
+
+        />
         </div>
         <div class="md:col-span-3">
           <label class="text-sm font-medium">URL do Conteúdo (opcional)</label>
-          <input name="modulos[\${mIdx}][aulas][\${aIdx}][conteudo_url]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="https://...">
+          <input name="modulos[${mIdx}][aulas][${aIdx}][conteudo_url]" class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="https://...">
         </div>
         <div class="flex items-center gap-2">
-          <input type="checkbox" name="modulos[\${mIdx}][aulas][\${aIdx}][liberada_apos_anterior]" value="1" class="h-4 w-4 border border-slate-300">
+          <input type="checkbox" name="modulos[${mIdx}][aulas][${aIdx}][liberada_apos_anterior]" value="1" class="h-4 w-4 border border-slate-300">
           <label class="text-sm">Liberar só após concluir aula anterior</label>
         </div>
         <div class="md:col-span-4 text-right">
@@ -598,48 +600,50 @@
             'codeBlock','horizontalLine'
         ];
 
-        // Helper global: inicializa CKEditor em qualquer root (documento ou trecho recém-inserido)
-        window.createCKEditorsIn = function(root = document){
-            root.querySelectorAll('textarea.js-ckeditor:not([data-cke-ready])').forEach((el) => {
-                ClassicEditor.create(el, {
-                    language: 'pt-br',
-                    toolbar: { items: toolbar },
-                    ckfinder: { uploadUrl: UPLOAD_URL },   // upload direto (imagem/vídeo/arquivo)
-                    mediaEmbed,
-                    htmlSupport,
-                    removePlugins: ['CKBox','CKFinder','EasyImage']
-                })
-                    .then((editor) => {
-                        el.setAttribute('data-cke-ready','1');
+        // Cria todos os .js-ckeditor da página
+        document.querySelectorAll('textarea.js-ckeditor').forEach((el) => {
+            ClassicEditor.create(el, {
+                language: 'pt-br',
+                toolbar: { items: toolbar },
+                ckfinder: { uploadUrl: UPLOAD_URL },   // ← upload direto (imagem/vídeo/qualquer arquivo)
+                mediaEmbed,
+                htmlSupport,
+                // se a sua build vier com esses plugins e você não quiser usar, remova daqui:
+                removePlugins: ['CKBox','CKFinder','EasyImage']
+            })
+                .then((editor) => {
+                    // Dica: se arrastar soltar um .mp4, o CKEditor envia ao UPLOAD_URL.
+                    // Depois é só colar a URL na linha e usar mediaEmbed: o preview vira <video> automaticamente.
+                    // Para facilitar, sempre que subir vídeo a gente já insere o player:
+                    const fileRepo = editor.plugins.get('FileRepository');
 
-                        // Pós-upload: se for vídeo, inserir como mediaEmbed (player)
-                        const fileRepo = editor.plugins.get('FileRepository');
-                        const origCreateAdapter = fileRepo.createUploadAdapter.bind(fileRepo);
-                        fileRepo.createUploadAdapter = loader => {
-                            const adapter = origCreateAdapter(loader);
-                            const origUpload = adapter.upload?.bind(adapter);
-                            if (!origUpload) return adapter;
+                    // Sobrescreve a renderização pós-upload de vídeo: insere como mediaEmbed
+                    const origCreateAdapter = fileRepo.createUploadAdapter.bind(fileRepo);
+                    fileRepo.createUploadAdapter = loader => {
+                        const adapter = origCreateAdapter(loader);
+                        const origUpload = adapter.upload?.bind(adapter);
+                        // Se for o adapter padrão do ckfinder, terá upload(); senão, só retorna o adapter
+                        if (!origUpload) return adapter;
 
-                            adapter.upload = async () => {
-                                const res = await origUpload();
-                                try {
-                                    const url = res?.default ?? res?.url ?? res?.urls?.default ?? res?.url;
-                                    if (url && /\.(mp4|webm|ogg)$/i.test(url)) {
-                                        editor.execute('mediaEmbed', url);
-                                        return { default: url };
-                                    }
-                                } catch(e) {}
-                                return res;
-                            };
-                            return adapter;
+                        adapter.upload = async () => {
+                            const res = await origUpload();
+                            try {
+                                const url = res?.default ?? res?.url ?? res?.urls?.default ?? res?.url;
+                                if (url && /\.(mp4|webm|ogg)$/i.test(url)) {
+                                    // insere um media embed com o vídeo local
+                                    editor.execute('mediaEmbed', url);
+                                    // retorna algo "inofensivo" pro fluxo de upload de imagem
+                                    return { default: url };
+                                }
+                            } catch(e) {}
+                            return res;
                         };
-                    })
-                    .catch(console.error);
-            });
-        };
+                        return adapter;
+                    };
 
-        // Inicializa os que já estão na página
-        window.createCKEditorsIn();
+                })
+                .catch(console.error);
+        });
 
     })();
 </script>
