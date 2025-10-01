@@ -44,12 +44,13 @@ class CursoAdminController extends Controller
     {
         $profId = session('prof_id');
 
+
         $data = $request->validate([
             'categoria_id'          => ['required','exists:categorias,id'],
             'titulo'                => ['required','string','max:255'],
-            'descricao_curta'       => ['nullable','string','max:255'],
+            'descricao_curta'       => ['nullable','string'],
             'descricao_completa'    => ['nullable','string'],
-            'nivel'                 => ['required', Rule::in(['iniciante','intermediario','avancado'])],
+            'nivel'                 => ['required', Rule::in(['todos','iniciante','intermediario','avancado'])],
             'carga_horaria_horas'   => ['nullable','numeric','min:0'], // campo da tela (horas)
             'maximo_alunos'         => ['nullable','integer','min:1'],
             'preco'                 => ['nullable','numeric','min:0'],
@@ -177,12 +178,13 @@ class CursoAdminController extends Controller
     {
         $this->authorizeCurso($curso);
 
+
         $data = $request->validate([
             'categoria_id'          => ['required','exists:categorias,id'],
             'titulo'                => ['required','string','max:255'],
-            'descricao_curta'       => ['nullable','string','max:255'],
+            'descricao_curta'       => ['nullable','string'],
             'descricao_completa'    => ['nullable','string'],
-            'nivel'                 => ['required', Rule::in(['iniciante','intermediario','avancado'])],
+            'nivel'                 => ['required', Rule::in(['todos','iniciante','intermediario','avancado'])],
             'preco'                 => ['nullable','numeric','min:0'],
             'preco_original'        => ['nullable','numeric','min:0'],
             'nota_minima_aprovacao' => ['nullable','numeric','min:0','max:10'],
