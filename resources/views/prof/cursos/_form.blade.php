@@ -37,6 +37,8 @@
                 <a href="#sec-basicas" class="px-3 py-1 rounded-full border hover:bg-slate-50">1. Informações</a>
                 <a href="#sec-estrutura" class="px-3 py-1 rounded-full border hover:bg-slate-50">2. Estrutura</a>
             </div>
+
+            {{--
             <div class="hidden md:flex items-center gap-2">
                 <button type="submit" form="cursoForm" name="salvar" value="rascunho" class="btn btn-outline h-9">
                     Salvar como Rascunho
@@ -45,6 +47,7 @@
                     {{ ($mode ?? 'create') === 'edit' ? 'Salvar Alterações' : 'Criar Curso' }}
                 </button>
             </div>
+            --}}
         </div>
     </nav>
 
@@ -90,6 +93,7 @@
                 @error('categoria_id') <div class="text-red-600 text-xs mt-1">{{ $message }}</div> @enderror
             </div>
 
+            {{--
             <div class="md:col-span-2">
                 <label class="text-sm font-medium">Descrição Curta</label>
                 <textarea
@@ -100,6 +104,7 @@
                     placeholder="Escreva um resumo do curso "
                 >{{ old('descricao_curta', $curso->descricao_curta) }}</textarea>
             </div>
+            --}}
 
             <div class="md:col-span-2">
                 <label class="text-sm font-medium">Descrição Completa</label>
@@ -225,7 +230,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                             <div class="md:col-span-2">
                                 <label class="text-sm font-medium">Título do Módulo</label>
-                                <input name="modulos[{{ $mIdx }}][titulo]"
+                                <input required name="modulos[{{ $mIdx }}][titulo]"
                                        value="{{ old("modulos.$mIdx.titulo", $modulo->titulo) }}"
                                        class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200">
                             </div>
@@ -285,7 +290,7 @@
                                     </div>
 
                                     <div class="md:col-span-3">
-                                        <label class="text-sm font-medium">URL do Conteúdo (opcional)</label>
+                                        <label class="text-sm font-medium">URL de Conteúdo (opcional)()</label>
                                         <input name="modulos[{{ $mIdx }}][aulas][{{ $aIdx }}][conteudo_url]"
                                                value="{{ old("modulos.$mIdx.aulas.$aIdx.conteudo_url", $aula->conteudo_url) }}"
                                                class="mt-1 w-full h-10 rounded-md border border-slate-300 px-3 focus:border-slate-400 focus:ring-2 focus:ring-slate-200" placeholder="https://...">

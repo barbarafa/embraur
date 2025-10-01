@@ -48,7 +48,7 @@ class CursoAdminController extends Controller
         $data = $request->validate([
             'categoria_id'          => ['required','exists:categorias,id'],
             'titulo'                => ['required','string','max:255'],
-            'descricao_curta'       => ['nullable','string'],
+            //'descricao_curta'       => ['nullable','string'],
             'descricao_completa'    => ['nullable','string'],
             'nivel'                 => ['required', Rule::in(['todos','iniciante','intermediario','avancado'])],
             'carga_horaria_horas'   => ['nullable','numeric','min:0'], // campo da tela (horas)
@@ -61,14 +61,15 @@ class CursoAdminController extends Controller
             'imagem_capa'           => ['nullable','image','max:4096'],
             // estrutura
             'modulos'                              => ['nullable','array'],
-            'modulos.*.titulo'                     => ['required_with:modulos.*','string','max:255'],
-            'modulos.*.descricao'                  => ['nullable','string'],
+            'modulos.*.titulo'                     => ['required','string','max:255'],
+            'modulos.*.descricao_curta'            => ['nullable','string'],
             'modulos.*.aulas'                      => ['nullable','array'],
             'modulos.*.aulas.*.titulo'             => ['required_with:modulos.*.aulas.*','string','max:255'],
             'modulos.*.aulas.*.duracao_minutos'    => ['nullable','integer','min:0'],
             'modulos.*.aulas.*.tipo'               => ['required_with:modulos.*.aulas.*', Rule::in(['video','texto','quiz','arquivo'])],
             'modulos.*.aulas.*.conteudo_url'       => ['nullable','string','max:255'],
             'modulos.*.aulas.*.conteudo_texto'     => ['nullable','string'],
+            'modulos.*.aulas.*.descricao'     => ['nullable','string'],
             'modulos.*.aulas.*.liberada_apos_anterior' => ['nullable','boolean'],
             'modulos.*.aulas.*.video_file' => ['nullable','file',
                 'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime',
@@ -77,7 +78,7 @@ class CursoAdminController extends Controller
         ]);
 
         $dataCurso = collect($data)->only([
-            'categoria_id','titulo','descricao_curta','descricao_completa',
+            'categoria_id','titulo','descricao_completa',
             'nivel','maximo_alunos','preco','preco_original','nota_minima_aprovacao',
             'validade_dias','status'
         ])->toArray();
@@ -182,7 +183,7 @@ class CursoAdminController extends Controller
         $data = $request->validate([
             'categoria_id'          => ['required','exists:categorias,id'],
             'titulo'                => ['required','string','max:255'],
-            'descricao_curta'       => ['nullable','string'],
+            //'descricao_curta'       => ['nullable','string'],
             'descricao_completa'    => ['nullable','string'],
             'nivel'                 => ['required', Rule::in(['todos','iniciante','intermediario','avancado'])],
             'preco'                 => ['nullable','numeric','min:0'],
@@ -195,8 +196,8 @@ class CursoAdminController extends Controller
             // estrutura (update)
             'modulos'                              => ['nullable','array'],
             'modulos.*.id'                         => ['nullable','exists:modulos,id'],
-            'modulos.*.titulo'                     => ['required_with:modulos.*','string','max:255'],
-            'modulos.*.descricao'                  => ['nullable','string'],
+            'modulos.*.titulo'                     => ['required','string','max:255'],
+            'modulos.*.descricao_curta'                  => ['nullable','string'],
             'modulos.*.aulas'                      => ['nullable','array'],
             'modulos.*.aulas.*.id'                 => ['nullable','exists:aulas,id'],
             'modulos.*.aulas.*.titulo'             => ['required_with:modulos.*.aulas.*','string','max:255'],
