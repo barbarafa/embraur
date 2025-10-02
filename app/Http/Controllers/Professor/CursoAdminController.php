@@ -71,9 +71,11 @@ class CursoAdminController extends Controller
             'modulos.*.aulas.*.conteudo_texto'     => ['nullable','string'],
             'modulos.*.aulas.*.descricao'     => ['nullable','string'],
             'modulos.*.aulas.*.liberada_apos_anterior' => ['nullable','boolean'],
-            'modulos.*.aulas.*.video_file' => ['nullable','file',
-                'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime',
-                'max:1024000' // ~1GB (em KB) – ajuste se quiser
+            'modulos.*.aulas.*.video_file' => [
+                'nullable',
+                'file',
+                'mimes:mp4,webm,ogg,mov,pdf,doc,docx',
+                'max:1024000'
             ],
         ]);
 
@@ -208,9 +210,11 @@ class CursoAdminController extends Controller
             'modulos.*.aulas.*.descricao'     => ['nullable','string'],
             'modulos.*.aulas.*.liberada_apos_anterior' => ['nullable','boolean'],
             'modulos.*.aulas.*.quiz_id'            => ['nullable','exists:quizzes,id'],
-            'modulos.*.aulas.*.video_file' => ['nullable','file',
-                'mimetypes:video/mp4,video/webm,video/ogg,video/quicktime',
-                'max:1024000' // ~1GB (em KB) – ajuste se quiser
+            'modulos.*.aulas.*.video_file' => [
+                'nullable',
+                'file',
+                'mimes:mp4,webm,ogg,mov,pdf,doc,docx',
+                'max:1024000'
             ],
         ]);
 

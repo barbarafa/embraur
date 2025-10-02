@@ -51,16 +51,14 @@
                 <div class="rounded-lg border bg-white">
                     <div class="flex text-sm">
                         <button class="px-4 py-2 border-b-2 border-blue-600 text-blue-700 font-medium">Conteúdo</button>
-{{--                        <button class="px-4 py-2 text-slate-500">Sobre</button>--}}
-{{--                        <button class="px-4 py-2 text-slate-500">Instrutor</button>--}}
-{{--                        <button class="px-4 py-2 text-slate-500">Avaliações</button>--}}
+                        {{--                        <button class="px-4 py-2 text-slate-500">Sobre</button>--}}
+                        {{--                        <button class="px-4 py-2 text-slate-500">Instrutor</button>--}}
+                        {{--                        <button class="px-4 py-2 text-slate-500">Avaliações</button>--}}
                     </div>
 
                     {{-- Módulos/Aulas --}}
-                    {{-- Módulos/Aulas (versão simples, sem JS) --}}
                     <div class="p-4">
                         <h3 class="font-semibold mb-2">Módulos do Curso</h3>
-
                         <div class="space-y-3">
                             @forelse($curso->modulos->sortBy('ordem') as $m)
                                 <details class="rounded-lg border bg-white" {{ $loop->first ? 'open' : '' }} data-acc>
@@ -72,13 +70,12 @@
                                             @endif
                                         </div>
                                         <span class="text-slate-500 text-sm inline-flex items-center gap-1">
-            <span>Ver aulas</span>
-            <svg class="w-4 h-4 acc-arrow transition-transform" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
-            </svg>
-          </span>
+                                        <span>Ver aulas</span>
+                                        <svg class="w-4 h-4 acc-arrow transition-transform" viewBox="0 0 20 20" fill="currentColor">
+                                          <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
+                                        </svg>
+                                      </span>
                                     </summary>
-
                                     @if($m->aulas->count())
                                         <div class="px-4 pb-3">
                                             @foreach($m->aulas->sortBy('ordem') as $a)
@@ -181,185 +178,185 @@
     </section>
 
 
-<script>
-    (function () {
-        const countUrl = "{{ route('checkout.cart.count') }}";
-        const addUrl   = "{{ route('checkout.cart.add', $curso->id) }}";
-        const cartUrl  = "{{ route('checkout.cart') }}"; // <- usaremos para salvar cupom na sessão
-        const token    = "{{ csrf_token() }}";
-        const btnAplicar = document.getElementById('btnAplicarCupom');
-        const cupomMsg   = document.getElementById('cupomMsg');
-        const precoSpan  = document.getElementById('precoAtualSpan');
-        const hiddenCupom = document.getElementById('cupomHidden'); // do form buy-now se logado
+    <script>
+        (function () {
+            const countUrl = "{{ route('checkout.cart.count') }}";
+            const addUrl   = "{{ route('checkout.cart.add', $curso->id) }}";
+            const cartUrl  = "{{ route('checkout.cart') }}"; // <- usaremos para salvar cupom na sessão
+            const token    = "{{ csrf_token() }}";
+            const btnAplicar = document.getElementById('btnAplicarCupom');
+            const cupomMsg   = document.getElementById('cupomMsg');
+            const precoSpan  = document.getElementById('precoAtualSpan');
+            const hiddenCupom = document.getElementById('cupomHidden'); // do form buy-now se logado
 
-        const cupomInput  = document.getElementById('cupomInput');
-        const buyNowForm  = document.getElementById('buyNowForm');
-        const buyNowLink  = document.getElementById('buyNowLink'); // quando não logado
-        const addForm     = document.getElementById('addToCartForm');
+            const cupomInput  = document.getElementById('cupomInput');
+            const buyNowForm  = document.getElementById('buyNowForm');
+            const buyNowLink  = document.getElementById('buyNowLink'); // quando não logado
+            const addForm     = document.getElementById('addToCartForm');
 
-        function normCupom() {
-            const v = (cupomInput?.value || '').trim().toUpperCase();
-            return v.length ? v : '';
-        }
-
-        function setBadges(count) {
-            document.querySelectorAll('[data-cart-badge]').forEach(badge => {
-                const n = Number(count) || 0;
-                badge.textContent = String(n);
-                if (n > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden');
-            });
-        }
-
-        async function refreshBadge() {
-            try {
-                const res = await fetch(countUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
-                const data = await res.json();
-                setBadges(data?.count ?? 0);
-            } catch (e) { /* silencia */ }
-        }
-
-        // === Comprar agora (LOGADO): injeta ?cupom= no GET ===
-        if (buyNowForm) {
-            buyNowForm.addEventListener('submit', () => {
-                const c = normCupom();
-                const hidden = document.getElementById('cupomHidden');
-                if (hidden) hidden.value = c;
-            });
-        }
-
-        // === Comprar agora (NÃO LOGADO): adiciona cupom na intended ===
-        if (buyNowLink) {
-            buyNowLink.addEventListener('click', (e) => {
-                const c = normCupom();
-                if (!c) return; // sem cupom, segue normal
-                try {
-                    const url = new URL(buyNowLink.href, window.location.origin);
-                    const intended = new URL(url.searchParams.get('intended') || '', window.location.origin);
-                    intended.searchParams.set('cupom', c); // preserva cupom até o checkout
-                    url.searchParams.set('intended', intended.toString());
-                    buyNowLink.href = url.toString();
-                } catch(_) { /* ignora em caso de URL inválida */ }
-            });
-        }
-
-        // Salva cupom na sessão chamando a página do carrinho com ?cupom=
-        async function saveCupomToSession() {
-            const c = normCupom();
-            if (!c) return;
-            try {
-                await fetch(`${cartUrl}?cupom=${encodeURIComponent(c)}`, { cache: 'no-store' });
-            } catch (_) {}
-        }
-
-        // === Adicionar ao carrinho ===
-        if (addForm) {
-            addForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                try {
-                    const res = await fetch(addUrl, {
-                        method: 'POST',
-                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
-                        cache: 'no-store'
-                    });
-
-                    // Após adicionar, gravamos o cupom na sessão (para o fluxo startCart)
-                    await saveCupomToSession();
-
-                    const contentType = res.headers.get('content-type') || '';
-                    if (!contentType.includes('application/json')) {
-                        await refreshBadge();
-                        toast('Curso adicionado ao carrinho.');
-                        return;
-                    }
-                    const data = await res.json();
-                    if (data?.ok) {
-                        setBadges(data.count ?? 0);
-                        toast(data.msg || 'Curso adicionado ao carrinho.');
-                    } else {
-                        throw new Error('Resposta inválida');
-                    }
-                } catch (err) {
-                    toast('Falha ao adicionar. Tente novamente.', true);
-                }
-            });
-        }
-
-        function toast(text, isError = false) {
-            const el = document.createElement('div');
-            el.textContent = text;
-            el.className =
-                'fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-2 rounded text-white text-sm shadow ' +
-                (isError ? 'bg-red-600' : 'bg-blue-600');
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 1800);
-        }
-
-        refreshBadge();
-
-
-        function realBRL(n){
-            return (n || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
-        }
-
-        async function aplicarCupomItem(){
-            const codigo = normCupom();
-            if (!codigo) {
-                if (cupomMsg) {
-                    cupomMsg.className = 'text-sm text-red-600';
-                    cupomMsg.textContent = 'Informe um código de cupom.';
-                    cupomMsg.classList.remove('hidden');
-                }
-                return;
+            function normCupom() {
+                const v = (cupomInput?.value || '').trim().toUpperCase();
+                return v.length ? v : '';
             }
-            if (btnAplicar) btnAplicar.disabled = true;
-            if (cupomMsg) { cupomMsg.classList.add('hidden'); cupomMsg.textContent = ''; }
 
-            try {
-                const url = new URL("{{ route('checkout.cupom.validar_item', $curso->id) }}", window.location.origin);
-                url.searchParams.set('codigo', codigo);
+            function setBadges(count) {
+                document.querySelectorAll('[data-cart-badge]').forEach(badge => {
+                    const n = Number(count) || 0;
+                    badge.textContent = String(n);
+                    if (n > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden');
+                });
+            }
 
-                const res  = await fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
-                const data = await res.json();
+            async function refreshBadge() {
+                try {
+                    const res = await fetch(countUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+                    const data = await res.json();
+                    setBadges(data?.count ?? 0);
+                } catch (e) { /* silencia */ }
+            }
 
-                if (!res.ok || !data.ok) {
+            // === Comprar agora (LOGADO): injeta ?cupom= no GET ===
+            if (buyNowForm) {
+                buyNowForm.addEventListener('submit', () => {
+                    const c = normCupom();
+                    const hidden = document.getElementById('cupomHidden');
+                    if (hidden) hidden.value = c;
+                });
+            }
+
+            // === Comprar agora (NÃO LOGADO): adiciona cupom na intended ===
+            if (buyNowLink) {
+                buyNowLink.addEventListener('click', (e) => {
+                    const c = normCupom();
+                    if (!c) return; // sem cupom, segue normal
+                    try {
+                        const url = new URL(buyNowLink.href, window.location.origin);
+                        const intended = new URL(url.searchParams.get('intended') || '', window.location.origin);
+                        intended.searchParams.set('cupom', c); // preserva cupom até o checkout
+                        url.searchParams.set('intended', intended.toString());
+                        buyNowLink.href = url.toString();
+                    } catch(_) { /* ignora em caso de URL inválida */ }
+                });
+            }
+
+            // Salva cupom na sessão chamando a página do carrinho com ?cupom=
+            async function saveCupomToSession() {
+                const c = normCupom();
+                if (!c) return;
+                try {
+                    await fetch(`${cartUrl}?cupom=${encodeURIComponent(c)}`, { cache: 'no-store' });
+                } catch (_) {}
+            }
+
+            // === Adicionar ao carrinho ===
+            if (addForm) {
+                addForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    try {
+                        const res = await fetch(addUrl, {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
+                            cache: 'no-store'
+                        });
+
+                        // Após adicionar, gravamos o cupom na sessão (para o fluxo startCart)
+                        await saveCupomToSession();
+
+                        const contentType = res.headers.get('content-type') || '';
+                        if (!contentType.includes('application/json')) {
+                            await refreshBadge();
+                            toast('Curso adicionado ao carrinho.');
+                            return;
+                        }
+                        const data = await res.json();
+                        if (data?.ok) {
+                            setBadges(data.count ?? 0);
+                            toast(data.msg || 'Curso adicionado ao carrinho.');
+                        } else {
+                            throw new Error('Resposta inválida');
+                        }
+                    } catch (err) {
+                        toast('Falha ao adicionar. Tente novamente.', true);
+                    }
+                });
+            }
+
+            function toast(text, isError = false) {
+                const el = document.createElement('div');
+                el.textContent = text;
+                el.className =
+                    'fixed bottom-4 left-1/2 -translate-x-1/2 px-3 py-2 rounded text-white text-sm shadow ' +
+                    (isError ? 'bg-red-600' : 'bg-blue-600');
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 1800);
+            }
+
+            refreshBadge();
+
+
+            function realBRL(n){
+                return (n || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+            }
+
+            async function aplicarCupomItem(){
+                const codigo = normCupom();
+                if (!codigo) {
                     if (cupomMsg) {
                         cupomMsg.className = 'text-sm text-red-600';
-                        cupomMsg.textContent = data?.mensagem || 'Cupom inválido.';
+                        cupomMsg.textContent = 'Informe um código de cupom.';
                         cupomMsg.classList.remove('hidden');
                     }
                     return;
                 }
+                if (btnAplicar) btnAplicar.disabled = true;
+                if (cupomMsg) { cupomMsg.classList.add('hidden'); cupomMsg.textContent = ''; }
 
-                // Atualiza o preço exibido
-                if (precoSpan) precoSpan.textContent = realBRL(data.total);
+                try {
+                    const url = new URL("{{ route('checkout.cupom.validar_item', $curso->id) }}", window.location.origin);
+                    url.searchParams.set('codigo', codigo);
 
-                // Guarda o cupom no hidden (para o GET do buy-now logado)
-                if (hiddenCupom) hiddenCupom.value = data.codigo;
+                    const res  = await fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+                    const data = await res.json();
 
-                // Feedback
-                if (cupomMsg) {
-                    cupomMsg.className = 'text-sm text-green-700';
-                    cupomMsg.textContent = data.mensagem || 'Cupom aplicado.';
-                    cupomMsg.classList.remove('hidden');
+                    if (!res.ok || !data.ok) {
+                        if (cupomMsg) {
+                            cupomMsg.className = 'text-sm text-red-600';
+                            cupomMsg.textContent = data?.mensagem || 'Cupom inválido.';
+                            cupomMsg.classList.remove('hidden');
+                        }
+                        return;
+                    }
+
+                    // Atualiza o preço exibido
+                    if (precoSpan) precoSpan.textContent = realBRL(data.total);
+
+                    // Guarda o cupom no hidden (para o GET do buy-now logado)
+                    if (hiddenCupom) hiddenCupom.value = data.codigo;
+
+                    // Feedback
+                    if (cupomMsg) {
+                        cupomMsg.className = 'text-sm text-green-700';
+                        cupomMsg.textContent = data.mensagem || 'Cupom aplicado.';
+                        cupomMsg.classList.remove('hidden');
+                    }
+
+                } catch (e) {
+                    if (cupomMsg) {
+                        cupomMsg.className = 'text-sm text-red-600';
+                        cupomMsg.textContent = 'Não foi possível validar o cupom. Tente novamente.';
+                        cupomMsg.classList.remove('hidden');
+                    }
+                } finally {
+                    if (btnAplicar) btnAplicar.disabled = false;
                 }
-
-            } catch (e) {
-                if (cupomMsg) {
-                    cupomMsg.className = 'text-sm text-red-600';
-                    cupomMsg.textContent = 'Não foi possível validar o cupom. Tente novamente.';
-                    cupomMsg.classList.remove('hidden');
-                }
-            } finally {
-                if (btnAplicar) btnAplicar.disabled = false;
             }
-        }
 
-        btnAplicar?.addEventListener('click', (e)=>{
-            e.preventDefault();
-            aplicarCupomItem();
-        });
-    })();
-</script>
+            btnAplicar?.addEventListener('click', (e)=>{
+                e.preventDefault();
+                aplicarCupomItem();
+            });
+        })();
+    </script>
 
 @endsection
 
