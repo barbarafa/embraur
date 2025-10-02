@@ -74,39 +74,72 @@
     </div>
 </div>
 
+<!-- Import do CKEditor (uma vez na página) -->
 <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
 
 <script>
     (function(){
-        if (window.__quizzes_bound) return; // evita ligar duas vezes se o partial for incluído por engano
+        // Evita bind duplicado se o partial for incluído mais de uma vez
+        if (window.__quizzes_bound) return;
         window.__quizzes_bound = true;
 
         const wrap   = document.getElementById('questoesWrap');
         const addBtn = document.getElementById('btnAddQuestao');
 
+        // --- CKEditor registry ---
+        const editors = new Map(); // textareaEl -> editorInstance
+
+        function initCkOn(textarea) {
+            if (!textarea || editors.has(textarea)) return;
+
+            ClassicEditor.create(textarea, {
+                toolbar: [
+                    'heading', '|',
+                    'bold','italic','underline','link','bulletedList','numberedList','blockQuote',
+                    '|', 'insertTable', 'undo','redo'
+                ]
+            })
+                .then(editor => editors.set(textarea, editor))
+                .catch(console.error);
+        }
+
+        function destroyEditor(textarea) {
+            const ed = editors.get(textarea);
+            if (ed) {
+                ed.destroy().catch(console.error);
+                editors.delete(textarea);
+            }
+        }
+
+        // --- Renumeração das questões e atualização dos names ---
         function renumberQuestoes(){
             if (!wrap) return;
+
             wrap.querySelectorAll('.questao-card').forEach((card,i)=>{
                 card.dataset.q = i;
-                const num = card.querySelector('.q-num'); if(num) num.textContent = i+1;
+                const num = card.querySelector('.q-num');
+                if (num) num.textContent = i + 1;
 
+                // Atualiza apenas o primeiro índice [n] (questões)
                 card.querySelectorAll('[name]').forEach(inp=>{
-                    // substitui apenas o primeiro índice [n] (questões)
                     inp.name = inp.name.replace(/questoes\[\d+\]/, `questoes[${i}]`);
                 });
 
+                // Mostra/esconde wrapper de opções conforme tipo
                 const sel = card.querySelector('[data-role="tipo"]');
                 const opw = card.querySelector('.opcoesWrap');
                 if (sel && opw) opw.style.display = (sel.value === 'multipla') ? '' : 'none';
             });
         }
-        window.__quizzes_renumberQuestoes = renumberQuestoes;
+        window.__quizzes_renumberQuestoes = renumberQuestoes; // caso seja chamado externamente
 
+        // --- Adicionar/Remover Opção ---
         function addOpcao(btn){
             const card   = btn.closest('.questao-card');
             const qIdx   = +card.dataset.q;
             const opWrap = card.querySelector('.opcoesWrap');
             const next   = opWrap.querySelectorAll('[data-op]').length;
+
             const tpl = `
       <div class="flex items-center gap-2 border rounded px-3 py-2 bg-white" data-op>
         <input type="text" name="questoes[${qIdx}][opcoes][${next}][texto]" placeholder="Opção..."
@@ -114,27 +147,34 @@
         <label class="flex items-center gap-1 text-sm">
           <input type="checkbox" name="questoes[${qIdx}][opcoes][${next}][correta]" value="1"> Correta
         </label>
-        <button type="button" class="text-red-600 text-xs" onclick="this.closest('[data-op]').remove()">Remover</button>
+        <button type="button" class="text-red-600 text-xs" data-action="remover-opcao">Remover</button>
       </div>`;
             btn.insertAdjacentHTML('beforebegin', tpl);
         }
-        window.__quizzes_addOpcao = addOpcao;
+        window.__quizzes_addOpcao = addOpcao; // se quiser chamar direto
 
-        function addQuestao(){
-            if (!wrap) return;
-            const idx = wrap.querySelectorAll('.questao-card').length;
-            const tpl = `
+        // --- Remover Questão (com cleanup dos editores) ---
+        function removeQuestao(card){
+            // Destrói qualquer editor dentro do card antes de remover
+            card.querySelectorAll('textarea[data-role="enunciado"]').forEach(destroyEditor);
+            card.remove();
+            renumberQuestoes();
+        }
+
+        // --- Template do Card de Questão ---
+        function questaoTemplate(idx){
+            return `
       <div class="questao-card border rounded-md p-4 bg-slate-50" data-q="${idx}">
         <div class="flex justify-between items-center mb-3">
           <h4 class="font-semibold">Questão <span class="q-num">${idx+1}</span></h4>
-          <button type="button" class="text-red-600 text-xs"
-                  onclick="this.closest('.questao-card').remove(); window.__quizzes_renumberQuestoes()">Remover</button>
+          <button type="button" class="text-red-600 text-xs" data-action="remover-questao">Remover</button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div class="md:col-span-2">
             <label class="text-sm font-medium">Enunciado *</label>
             <textarea name="questoes[${idx}][enunciado]" rows="3"
+                      data-role="enunciado"
                       class="mt-1 w-full rounded-md border px-3 py-2"></textarea>
           </div>
           <div>
@@ -159,19 +199,59 @@
             <label class="flex items-center gap-1 text-sm">
               <input type="checkbox" name="questoes[${idx}][opcoes][0][correta]" value="1"> Correta
             </label>
-            <button type="button" class="text-red-600 text-xs" onclick="this.closest('[data-op]').remove()">Remover</button>
+            <button type="button" class="text-red-600 text-xs" data-action="remover-opcao">Remover</button>
           </div>
           <button type="button" class="text-xs px-2 py-1 rounded border hover:bg-slate-50"
-                  onclick="window.__quizzes_addOpcao(this)">＋ Adicionar Opção</button>
+                  data-action="adicionar-opcao">＋ Adicionar Opção</button>
         </div>
       </div>`;
-            wrap.insertAdjacentHTML('beforeend', tpl);
+        }
+
+        // --- Adicionar Questão ---
+        function addQuestao(){
+            if (!wrap) return;
+            const idx = wrap.querySelectorAll('.questao-card').length;
+            wrap.insertAdjacentHTML('beforeend', questaoTemplate(idx));
+            const card = wrap.querySelector(`.questao-card[data-q="${idx}"]`);
+
+            // Inicializa CKEditor apenas para o novo textarea
+            const newTextarea = card.querySelector('textarea[data-role="enunciado"]');
+            initCkOn(newTextarea);
+
+            // Ajusta visibilidade das opções conforme tipo atual
+            const sel = card.querySelector('[data-role="tipo"]');
+            const opw = card.querySelector('.opcoesWrap');
+            if (sel && opw) opw.style.display = (sel.value === 'multipla') ? '' : 'none';
+
             renumberQuestoes();
         }
-        window.__quizzes_addQuestao = addQuestao;
+        window.__quizzes_addQuestao = addQuestao; // se quiser chamar fora
 
+        // --- Delegação de eventos (click/change) ---
         function bind(){
+            // Botão "Adicionar Questão"
             addBtn && addBtn.addEventListener('click', addQuestao);
+
+            // Delegação no wrap para lidar com ações dos cards
+            wrap?.addEventListener('click', (e)=>{
+                const t = e.target;
+
+                if (t.matches('[data-action="remover-questao"]')){
+                    const card = t.closest('.questao-card');
+                    if (card) removeQuestao(card);
+                }
+
+                if (t.matches('[data-action="adicionar-opcao"]')){
+                    addOpcao(t);
+                }
+
+                if (t.matches('[data-action="remover-opcao"]')){
+                    t.closest('[data-op]')?.remove();
+                    // Não há CKEditor nas opções; nada a destruir aqui
+                }
+            });
+
+            // Mostrar/esconder opções quando muda o tipo
             wrap?.addEventListener('change', (e)=>{
                 if(e.target.matches('[data-role="tipo"]')){
                     const card = e.target.closest('.questao-card');
@@ -179,70 +259,41 @@
                     if(opw) opw.style.display = e.target.value === 'multipla' ? '' : 'none';
                 }
             });
-            renumberQuestoes();
+
+            // Inicializa CKEditor nos textareas já existentes
+            document.querySelectorAll('textarea[data-role="enunciado"]').forEach(initCkOn);
+
+            // Sincroniza dados dos editores no submit do primeiro <form> ancestral
+            const form = wrap?.closest('form') || document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', () => {
+                    for (const [textarea, ed] of editors.entries()) {
+                        textarea.value = ed.getData();
+                    }
+                });
+            }
         }
 
+        // (Opcional) Segurança extra: observer para capturar remoções diretas fora do fluxo normal
+        const mo = new MutationObserver(muts => {
+            for (const m of muts) {
+                m.removedNodes.forEach(n => {
+                    if (n.nodeType === 1) {
+                        n.querySelectorAll?.('textarea[data-role="enunciado"]').forEach(destroyEditor);
+                        if (n.matches?.('textarea[data-role="enunciado"]')) destroyEditor(n);
+                    }
+                });
+            }
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+
+        // Start!
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', bind);
         } else {
             bind();
         }
 
-        const editors = new Map();
-
-        function initCkOn(textarea) {
-            if (!textarea || editors.has(textarea)) return;
-
-            ClassicEditor.create(textarea, {
-                toolbar: [
-                    'heading', '|',
-                    'bold','italic','underline','link','bulletedList','numberedList','blockQuote',
-                    '|', 'insertTable', 'undo','redo'
-                ]
-            }).then(editor => {
-                editors.set(textarea, editor);
-            }).catch(console.error);
-        }
-
-        // Inicializa nos que já existem
-        document.querySelectorAll('textarea[data-role="enunciado"]').forEach(initCkOn);
-
-        // Se você adiciona/remova questões via JS, monitora o container
-        const container = document; // ou: document.getElementById('wrapQuestoes')
-        const mo = new MutationObserver(muts => {
-            for (const m of muts) {
-                m.addedNodes.forEach(n => {
-                    if (n.nodeType === 1) {
-                        n.querySelectorAll?.('textarea[data-role="enunciado"]').forEach(initCkOn);
-                        if (n.matches?.('textarea[data-role="enunciado"]')) initCkOn(n);
-                    }
-                });
-                m.removedNodes.forEach(n => {
-                    if (n.nodeType === 1) {
-                        n.querySelectorAll?.('textarea[data-role="enunciado"]').forEach(te => destroyEditor(te));
-                        if (n.matches?.('textarea[data-role="enunciado"]')) destroyEditor(n);
-                    }
-                });
-            }
-        });
-        mo.observe(container.body || container, { childList: true, subtree: true });
-
-        function destroyEditor(textarea) {
-            const ed = editors.get(textarea);
-            if (ed) {
-                ed.destroy().catch(console.error);
-                editors.delete(textarea);
-            }
-        }
-
-        // Garante que o HTML do editor vai para o textarea antes de enviar
-        const form = document.querySelector('form'); // ajuste se houver mais de um form
-        if (form) {
-            form.addEventListener('submit', () => {
-                for (const [textarea, ed] of editors.entries()) {
-                    textarea.value = ed.getData();
-                }
-            });
-        }
     })();
 </script>
+
