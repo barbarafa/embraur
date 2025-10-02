@@ -18,8 +18,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="md:col-span-2">
                         <label class="text-sm font-medium">Enunciado *</label>
-                        <textarea name="questoes[{{ $qIdx }}][enunciado]" rows="3"
-                                  class="mt-1 w-full rounded-md border px-3 py-2">{{ $questao['enunciado'] ?? '' }}</textarea>
+                        <textarea
+                            id="enunciado-{{ $qIdx }}"
+                            data-role="enunciado"
+                            name="questoes[{{ $qIdx }}][enunciado]"
+                            rows="6"
+                            class="mt-1 w-full rounded-md border px-3 py-2"
+                        >{!! old("questoes.$qIdx.enunciado", $questao['enunciado'] ?? '') !!}</textarea>
                     </div>
                     <div>
                         <label class="text-sm font-medium">Tipo *</label>
@@ -69,7 +74,8 @@
     </div>
 </div>
 
-{{-- Script inline (sem depender de @stack) --}}
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+
 <script>
     (function(){
         if (window.__quizzes_bound) return; // evita ligar duas vezes se o partial for incluído por engano
@@ -180,6 +186,63 @@
             document.addEventListener('DOMContentLoaded', bind);
         } else {
             bind();
+        }
+
+        const editors = new Map();
+
+        function initCkOn(textarea) {
+            if (!textarea || editors.has(textarea)) return;
+
+            ClassicEditor.create(textarea, {
+                toolbar: [
+                    'heading', '|',
+                    'bold','italic','underline','link','bulletedList','numberedList','blockQuote',
+                    '|', 'insertTable', 'undo','redo'
+                ]
+            }).then(editor => {
+                editors.set(textarea, editor);
+            }).catch(console.error);
+        }
+
+        // Inicializa nos que já existem
+        document.querySelectorAll('textarea[data-role="enunciado"]').forEach(initCkOn);
+
+        // Se você adiciona/remova questões via JS, monitora o container
+        const container = document; // ou: document.getElementById('wrapQuestoes')
+        const mo = new MutationObserver(muts => {
+            for (const m of muts) {
+                m.addedNodes.forEach(n => {
+                    if (n.nodeType === 1) {
+                        n.querySelectorAll?.('textarea[data-role="enunciado"]').forEach(initCkOn);
+                        if (n.matches?.('textarea[data-role="enunciado"]')) initCkOn(n);
+                    }
+                });
+                m.removedNodes.forEach(n => {
+                    if (n.nodeType === 1) {
+                        n.querySelectorAll?.('textarea[data-role="enunciado"]').forEach(te => destroyEditor(te));
+                        if (n.matches?.('textarea[data-role="enunciado"]')) destroyEditor(n);
+                    }
+                });
+            }
+        });
+        mo.observe(container.body || container, { childList: true, subtree: true });
+
+        function destroyEditor(textarea) {
+            const ed = editors.get(textarea);
+            if (ed) {
+                ed.destroy().catch(console.error);
+                editors.delete(textarea);
+            }
+        }
+
+        // Garante que o HTML do editor vai para o textarea antes de enviar
+        const form = document.querySelector('form'); // ajuste se houver mais de um form
+        if (form) {
+            form.addEventListener('submit', () => {
+                for (const [textarea, ed] of editors.entries()) {
+                    textarea.value = ed.getData();
+                }
+            });
         }
     })();
 </script>

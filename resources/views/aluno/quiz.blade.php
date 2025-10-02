@@ -96,7 +96,7 @@
                                         </div>
                                     </div>
 
-                                    <p class="mt-2">{{ $q->enunciado }}</p>
+                                    <p class="mt-2">{!! $q->enunciado !!} </p>
                                     <input type="hidden" name="respostas[{{ $k }}][questao_id]" value="{{ $q->id }}"/>
 
                                     @if($q->tipo === 'multipla')
