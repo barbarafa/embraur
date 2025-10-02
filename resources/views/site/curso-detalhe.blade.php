@@ -68,7 +68,7 @@
                                         <div class="text-left">
                                             <div class="font-medium">Módulo {{ $loop->iteration }}: {{ $m->titulo }}</div>
                                             @if($m->descricao)
-                                                <div class="text-xs text-slate-500">{{ $m->descricao }}</div>
+                                                <div class="text-xs text-slate-500">{!! $m->descricao !!}</div>
                                             @endif
                                         </div>
                                         <span class="text-slate-500 text-sm inline-flex items-center gap-1">
@@ -86,7 +86,7 @@
                                                     <div class="truncate">
                                                         <div class="text-sm">{{ $a->titulo }}</div>
                                                         @if($a->descricao)
-                                                            <div class="text-xs text-slate-500 truncate">{{ $a->descricao }}</div>
+                                                            <div class="text-xs text-slate-500 truncate">{!! $a->descricao !!}</div>
                                                         @endif
                                                     </div>
                                                     <div class="text-xs text-slate-500">{{ $a->duracao_minutos }} min</div>
