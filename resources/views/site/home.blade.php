@@ -192,7 +192,7 @@
             <div class="mt-8 grid md:grid-cols-3 gap-6">
                 <div class="card p-6">
                     <div class="text-sm text-slate-500">WhatsApp</div>
-                    <a href="https://wa.me/5548920007132?text=Olá!%20Preciso%20de%20suporte%20no%20site%20Embraur."
+                    <a href="https://wa.me/554831983198?text=Olá!%20Preciso%20de%20suporte%20no%20site%20Embraur."
                        target="_blank" rel="noopener"
                        class="mt-1 block font-semibold text-[#606d50] hover:underline">
                         (48) 92000-7132
@@ -201,8 +201,8 @@
 
                 <div class="card p-6">
                     <div class="text-sm text-slate-500">E-mail</div>
-                    <a href="mailto:embraur@embraur.com" class="mt-1 block font-semibold text-[#606d50] hover:underline">
-                        embraur@embraur.com
+                    <a href="mailto:embraur@embraur.com.br " class="mt-1 block font-semibold text-[#606d50] hover:underline">
+                        embraur@embraur.com.br
                     </a>
                 </div>
 

@@ -145,7 +145,7 @@
         <div>
             <div class="font-semibold mb-2">Contato</div>
             <ul class="space-y-1 text-slate-600">
-                <li>contato@eadpro.com.br</li><li>(48) 3198-3198</li><li>São Paulo, SP</li>
+                <li>embraur@embraur.com.br</li><li>(48) 3198-3198</li>
             </ul>
         </div>
     </div>
@@ -154,7 +154,7 @@
     {{-- WHATSAPP FLUTUANTE (lado direito) --}}
     <div class="fixed right-5 bottom-5 flex flex-col items-end gap-3 z-50">
         {{-- whatsapp --}}
-        <a href="https://wa.me/5548920007132"
+        <a href="https://wa.me/554831983198"
            target="_blank" rel="noopener"
            class="w-14 h-14 rounded-full bg-[#25D366] grid place-items-center text-white shadow-lg">
             <svg viewBox="0 0 32 32" class="w-7 h-7" aria-hidden="true">
