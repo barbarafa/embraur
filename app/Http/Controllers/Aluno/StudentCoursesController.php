@@ -28,7 +28,7 @@ class StudentCoursesController extends Controller
                 'progresso'     => $progresso,
                 'aulas_feitas'  => $feitas,
                 'aulas_total'   => $total,
-                'link'          => '#',
+                'link'          => $curso ? route('aluno.curso.conteudo', $curso->id) : route('aluno.cursos'),
                 '_model'        => $curso,
             ];
         });
