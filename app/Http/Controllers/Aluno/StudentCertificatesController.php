@@ -8,7 +8,7 @@ use App\Models\Cursos;
 use App\Models\Matriculas;
 use App\Models\User;
 use App\Services\CourseCompletionService;
-use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
 use App\Models\QuizTentativa;
@@ -302,13 +302,20 @@ class StudentCertificatesController extends Controller
         $qrUrl = route('certificados.verify', $cert->codigo_verificacao);
 
         // gera o PNG em memória
-        $qr = QrCode::create($qrUrl)->setSize(350)->setMargin(1);
-        $writer = new PngWriter();
-        $result = $writer->write($qr);
-
-        // salva num arquivo temporário e insere no PDF
-        $tmpDir = storage_path('app/tmp'); if (!is_dir($tmpDir)) @mkdir($tmpDir, 0775, true);
+        $tmpDir = storage_path('app/tmp');
+        if (!is_dir($tmpDir)) @mkdir($tmpDir, 0775, true);
         $qrPath = $tmpDir.'/qr-'.$cert->codigo_verificacao.'.png';
+
+// Gera o QR (v6)
+
+        $builder = new Builder(
+            writer: new PngWriter(),
+            data: $qrUrl,
+            size: 350,
+            margin: 1
+        );
+
+        $result = $builder->build();
         $result->saveToFile($qrPath);
 
         // posicione onde está o retângulo vermelho (ajuste se precisar)
