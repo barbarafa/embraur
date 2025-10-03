@@ -174,7 +174,7 @@
             </div>
 
             <div class="rounded-xl overflow-hidden shadow border bg-white p-6">
-                <img src="https://images.unsplash.com/photo-1516826957135-700dedea698c?q=80&w=1600&auto=format&fit=crop"
+                <img src="https://blog.mrhgestao.com.br/wp-content/uploads/2018/03/178698-tecnico-em-seguranca-do-trabalho-conheca-o-mercado-no-brasil.jpg"
                      alt="Treinamento de segurança do trabalho" class="w-full h-56 object-cover rounded-lg">
                 <div class="mt-4 text-sm text-slate-600">
                     Certificados reconhecidos • Conteúdo atualizado • Acesso 24/7
@@ -195,7 +195,7 @@
                     <a href="https://wa.me/554831983198?text=Olá!%20Preciso%20de%20suporte%20no%20site%20Embraur."
                        target="_blank" rel="noopener"
                        class="mt-1 block font-semibold text-[#606d50] hover:underline">
-                        (48) 92000-7132
+                        (48) 3198-3198
                     </a>
                 </div>
 
